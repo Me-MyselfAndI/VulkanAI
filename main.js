@@ -16,29 +16,32 @@ const userInterface = readline.createInterface({
 import fs from "fs";
 
 userInterface.prompt();
+console.log("Type anything to get a response from the file");
 userInterface.on("line", async input => {
   const html = fs.readFileSync('./page_source.html', "utf-8");
 
   const regex = {
     'src': /src=(\\)?(("(.)+?")|('(.)+?'))/gi,
-    'href': /href=(\\)?(("(.)+?")|('(.)+?'))/gi,
-    'svg': /<svg\b[\s\S]*?<\/svg>/gi,
+    'href': /href=(\\|^=)?(("(.)+?")|('(.)+?'))/gi,
     'class': /class=(\\)?(("(.)+?")|('(.)+?'))/gi,
     'id': /id=(\\)?(("(.)+?")|('(.)+?'))/gi,
     'script': /<script\b[\s\S]*?<\/script>/gi,
+    'svg': /<svg\b[\s\S]*?<\/svg>/gi,
     'meta': /<meta(.)+?>/gi,
-    'p': /<p\b[\s\S]*?<\/p>/gi,
+    'style': /<style\b[\s\S]*?<\/style>/gi,
+    // 'p': /<p\b[\s\S]*?<\/p>/gi,
   };
 
   let replacementTagAssigners = {
     'src': num => 'SRC' + num,
     'href': num => 'HREF' + num,
-    'svg': num => '<SVG' + num + '\/>',
     'class': num => 'CLASS' + num,
     'id': num => 'ID' + num,
-    'script': num => '<SCRIPT' + num + '\/>',
-    'meta': num => '<META' + num + '\/>',
-    'p': num => '<P' + num + '\/>',
+    'script': num => 'SCRIPT' + num,
+    'svg': num => 'SVG' + num,
+    'meta': num => 'META' + num,
+    'style': num => 'STYLE' + num,
+    // 'p': num => 'P' + num,
   }
 
   let htmlAbbreviations = {
@@ -49,7 +52,8 @@ userInterface.on("line", async input => {
     'id': [],
     'script': [],
     'meta': [],
-    'p': [],
+    'style': [],
+    // 'p': [],
   };
 
   let compressedHTML = html;
@@ -74,16 +78,18 @@ userInterface.on("line", async input => {
             "same as in the provided HTML. In other words, it is vitally important that, for example, SRC1 in the " +
             "original, if conserved at all in your response, stays as SRC1 and not just SRC or SRC23. And same with, say URL2 or HREF3, or any " +
             "other things that are abbreviated HTML tags. That is because I am giving you a compressed file, and each of those" +
-            " signifies a chunk of original file, shortened to fit your token limit. You have to make a simple and clean version of this " +
-            "website with only content meaningful to finding and filing the form of address change:\n" + compressedHTML }]
+            " signifies a chunk of original file, shortened to fit your token limit. You are also not supposed to make up any new data " +
+            "not found in this resource or in any other way introduce new information: you are only to refactor and throw away everything that isn't needed" +
+            "to make what is important clear and simple to interact with. Your result needs to be a valid HTML, aside from the abbreviations:\n" + compressedHTML }]
     });
 
-    console.log(result.data.choices);
 
+    console.log(result.data.choices, "\u001b[31mHERE ENDS THE INITIAL OUTPUT\u001b[0m");
     let decompressedHTML = result.data.choices[0].message.content;
+
     for (const currAbbrev in htmlAbbreviations) {
       let currAbbrevArray = htmlAbbreviations[currAbbrev];
-      for (let i = 0; i < currAbbrevArray.length; ++i) {
+      for (let i = currAbbrevArray.length - 1; i >= 0; --i) {
         decompressedHTML = decompressedHTML.replaceAll((currAbbrev + i).toUpperCase(), currAbbrevArray[i]);
       }
     }
@@ -92,5 +98,7 @@ userInterface.on("line", async input => {
   } catch (e) {
     console.log(e.response.data.error);
   }
+
+  console.log("You got the gist, but type something again. Oh yeah, I want you to press those juicy buttons more");
 });
 
