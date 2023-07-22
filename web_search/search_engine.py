@@ -27,7 +27,7 @@ class Search_Engine:
         self.last_search["res"] = results
         self.last_search["prompt"] = prompt
 
-    def open_link(self, link_number=0):
+    def get_link_html(self, link_number=0):
         return requests.get(self.last_search["res"][link_number]).text
 
 
