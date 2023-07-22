@@ -41,4 +41,4 @@ if __name__ == '__main__':
     # Use update-links method to refresh the search results (stored inside the class)
     search_engine.update_links("Chupa-chups")
     # Open link (default opens 0th link, otherwise use link_number argument)
-    print(search_engine.get_first_link_html())
+    print(search_engine.get_result_html(5))
