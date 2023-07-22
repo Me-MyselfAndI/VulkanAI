@@ -38,7 +38,8 @@ class Search_Engine:
 if __name__ == '__main__':
     # Create the engine
     search_engine = Search_Engine()
-    # Use update-links method to refresh the search results (stored inside the class)
-    search_engine.update_links("Chupa-chups")
+    # Use update-links method to refresh the search results (stored inside the class).
+    # Start entry is 0 by default, it's the pagination offset
+    search_engine.update_links("Chupa-chups", start_entry=0)
     # Open link (default opens 0th link, otherwise use link_number argument)
-    print(search_engine.get_first_link_html())
+    print(search_engine.get_result_html(5))
