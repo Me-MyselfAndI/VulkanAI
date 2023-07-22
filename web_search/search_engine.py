@@ -27,7 +27,10 @@ class Search_Engine:
         self.last_search["res"] = results
         self.last_search["prompt"] = prompt
 
-    def get_link_html(self, link_number=0):
+    def get_first_result_html(self):
+        return requests.get(self.last_search["res"][0]).text
+
+    def get_result_html(self, link_number):
         return requests.get(self.last_search["res"][link_number]).text
 
 
@@ -35,7 +38,8 @@ class Search_Engine:
 if __name__ == '__main__':
     # Create the engine
     search_engine = Search_Engine()
-    # Use update-links method to refresh the search results (stored inside the class)
-    search_engine.update_links("Chupa-chups")
+    # Use update-links method to refresh the search results (stored inside the class).
+    # Start entry is 0 by default, it's the pagination offset
+    search_engine.update_links("Chupa-chups", start_entry=0)
     # Open link (default opens 0th link, otherwise use link_number argument)
-    print(search_engine.get_link_html(link_number=0))
+    print(search_engine.get_result_html(5))
