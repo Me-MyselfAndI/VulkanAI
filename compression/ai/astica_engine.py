@@ -1,7 +1,5 @@
 import requests
 import json
-import base64
-import os
 
 
 class AsticaEngine:
@@ -27,7 +25,7 @@ class AsticaEngine:
 
 
 def main():
-    api_key = 'B8757667-43F8-42A9-83B0-43E53FAA5224CD725B78-7776-4EA2-873A-946831E2F562'
+    api_key = input("Enter Astica API key:\n")
     image_address = 'https://images-na.ssl-images-amazon.com/images/I/71rlMBf3vcL._AC_UL150_SR150,150_.jpg'
 
     astica_engine = AsticaEngine(api_key)
