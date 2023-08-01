@@ -17,6 +17,12 @@ body {
   #icon {
     margin-right: 43.5%;
   }
+
+  @media (max-width: 768px) {
+    #icon {
+      margin-right: 40%;
+    }
+  }
   
   .input {
     padding: 10px;
