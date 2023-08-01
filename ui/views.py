@@ -18,4 +18,8 @@ def search_result():
     # Open link (default opens 0th link, otherwise use link_number argument)
     return render_template_string(search_engine.get_first_result_html())
 
+@views.route("/go-to")
+def go_to():
+    return redirect(url_for("views.search_result"))
+
 

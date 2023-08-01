@@ -21,7 +21,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 </head>
 
-<body class="d-flex h-100 text-center text-bg-dark">
+<body class="d-flex h-100 text-center text-bg-dark" onload="hideLoader()">
 
   <!--Loading animation-->
   <div class="loader" id="loader">
@@ -60,7 +60,7 @@
     <h2 id="ask">What are you looking for today?</h2>
 
     <div class="box">
-      <form onsubmit="showLoader()">
+      <form onsubmit="goToSearch()">
         <i class="fa fa-search" id="icon" style="font-size:40px;"></i>
         <input type="text" class="input" id="search" name="txt" onmouseout="this.value = ''; this.blur();">
       </form>
