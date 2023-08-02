@@ -1,9 +1,11 @@
+from urllib.parse import urlparse, urljoin
+
+from bs4 import BeautifulSoup
 from serpapi import GoogleSearch as _RunSearch
-import json
 import requests
 
 
-class Search_Engine:
+class SearchEngine:
     def __init__(self):
         self.last_search = {"res": [], "prompt": ""}
         with open("../keys/serp_api_key.txt") as file:
@@ -27,19 +29,38 @@ class Search_Engine:
         self.last_search["res"] = results
         self.last_search["prompt"] = prompt
 
-    def get_first_result_html(self):
-        return requests.get(self.last_search["res"][0]).text
+    def get_first_website(self):
+        return self.get_website(0)
 
-    def get_result_html(self, link_number):
-        return requests.get(self.last_search["res"][link_number]).text
+    def get_website(self, link_number):
+        website_url = self.last_search["res"][link_number]
+        response = requests.get(website_url)
+        # html = response.text
+
+        website_content = response.content
+        soup = BeautifulSoup(website_content, 'html.parser')
+        link_tags = soup.find_all('link', rel='stylesheet')
+        css_content = []
+        for link in link_tags:
+            css_url = link.get('href')
+            if not bool(urlparse(css_url).netloc):
+                css_url = urljoin(website_url, css_url)
+            css_response = requests.get(css_url)
+            if css_response.status_code == 200:
+                css_content.append(css_response.text)
+
+        return {'html': soup.prettify(), 'css': css_content}
 
 
 # Use case:
 if __name__ == '__main__':
     # Create the engine
-    search_engine = Search_Engine()
+    search_engine = SearchEngine()
     # Use update-links method to refresh the search results (stored inside the class).
     # Start entry is 0 by default, it's the pagination offset
     search_engine.update_links("Chupa-chups", start_entry=0)
     # Open link (default opens 0th link, otherwise use link_number argument)
-    print(search_engine.get_result_html(5))
+    page = search_engine.get_first_result_html()
+    print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
+    print('\n\n\n\u001b[32mCSS\u001b[0m\n', page['css'])
+    print()
