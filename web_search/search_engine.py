@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # Start entry is 0 by default, it's the pagination offset
     search_engine.update_links("Chupa-chups", start_entry=0)
     # Open link (default opens 0th link, otherwise use link_number argument)
-    page = search_engine.get_first_result_html()
+    page = search_engine.get_first_website()
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
     print('\n\n\n\u001b[32mCSS\u001b[0m\n', page['css'])
     print()
