@@ -8,16 +8,10 @@ showLoader = function(e) {
     document.getElementById('loader').style.visibility = 'show';
 }
 
-function goToSearch() {
-    console.log('aint')
-    fetch('/go-to').then(response => response.text()).then(url => {
-        console.log('test')
-        if (url) {
-            window.location.href = url;  // Redirect the user to the specified URL
-        } else {
-            alert('Condition not met. No redirection.');  // Show an alert if condition is not met
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
+document.getElementById("search").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  window.location.href = "http://127.0.0.1:8000/views/search-result";
+});
+
 
