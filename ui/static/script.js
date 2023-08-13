@@ -9,9 +9,9 @@ showLoader = function(e) {
 }
 
 function goToSearch() {
-    fetch('/go-to')  // Send a GET request to Flask endpoint
-    .then(response => response.text())  // Parse the response as text
-    .then(url => {
+    console.log('aint')
+    fetch('/go-to').then(response => response.text()).then(url => {
+        console.log('test')
         if (url) {
             window.location.href = url;  // Redirect the user to the specified URL
         } else {
