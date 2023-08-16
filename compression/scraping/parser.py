@@ -1,9 +1,16 @@
+import copy
+
 from bs4 import BeautifulSoup
 
 
 class Parser:
-    def __init__(self, html):
-        self.html = BeautifulSoup(html, 'html.parser')
+    def __init__(self, html=None, soup=None):
+        if html is not None:
+            self.html = BeautifulSoup(html, 'html.parser')
+        elif soup is not None:
+            self.html = copy.copy(soup)
+        else:
+            print("\u001b[31mERROR: WRONG INITIALIZATION OF PARSER")
 
     def find_product_groups(self):
         images = self.html.find_all("img")
@@ -33,14 +40,15 @@ class Parser:
                     print("Reached the bedrock, seeing next product")
                     break
 
-        for product in products:
-            print(product['text'], product['img'], product['href'], sep='\n\t', end='\n')
+        # for product in products:
+        #     print(product['text'], product['img'], product['href'], sep='\n\t', end='\n')
+
         return products
 
 
 def main():
     with open('test.html', encoding='utf-8') as file:
-        parser = Parser(file)
+        parser = Parser(html=file)
 
     parser.find_product_groups()
 

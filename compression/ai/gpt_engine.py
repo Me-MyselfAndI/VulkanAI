@@ -11,10 +11,10 @@ class GPTEngine:
         self.model = 'gpt-4'
 
     def get_response(self, prompt: str, *args):
-        # Use %s and str.join() for arguments. For example:
-        # prompt = "Hello, my name is %s, I work at %s"
+        # Use {} and str.format() for arguments. For example:
+        # prompt = "Hello, my name is {}, I work at {}"
         # args = ["Harvey", "DreamWave"]
-        request = prompt.join(args)
+        request = prompt.format(args)
 
         result = openai.ChatCompletion.create(
             model=self.model,
@@ -24,4 +24,4 @@ class GPTEngine:
             }]
         )
 
-        return result
+        return result.choices[0].message.content
