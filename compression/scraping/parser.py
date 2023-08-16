@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 class Parser:
     def __init__(self, html):
         self.html = BeautifulSoup(html, 'html.parser')
-        print(self.html.prettify())
 
     def find_product_groups(self):
         images = self.html.find_all("img")
@@ -40,7 +39,7 @@ class Parser:
 
 
 def main():
-    with open('test.html') as file:
+    with open('test.html', encoding='utf-8') as file:
         parser = Parser(file)
 
     parser.find_product_groups()
