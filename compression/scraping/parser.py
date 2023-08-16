@@ -24,10 +24,10 @@ class Parser:
             curr_parent = product['parent']
             while True:
                 curr_parent = curr_parent.parent
-                text = curr_parent.find(text=True)
-                if curr_parent.find(text=True):
+                text = curr_parent.find_all(text=True)
+                if text:
                     products[i]['text'] = text
-                    products[i]['parent'] = curr_parent
+                    products[i].pop('parent')
                     break
                 if not curr_parent.parent:
                     print("Reached the bedrock, seeing next product")
