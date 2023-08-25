@@ -78,7 +78,7 @@ class CompressionEngine:
             </html>
             """
 
-        with open(output_file, "w") as file:
+        with open(output_file, "w", encoding='utf-8') as file:
             file.write(html_content)
             print("Saved")
 
