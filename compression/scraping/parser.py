@@ -1,12 +1,16 @@
+import copy
+
 from bs4 import BeautifulSoup
 
 
 class Parser:
-    def __init__(self, html):
-        self.html = BeautifulSoup(html, 'html.parser')
-
-    def find_product_groups(self):
-        images = self.html.find_all("img")
+    def find_marketplace_product_groups(self, html=None, soup=None):
+        if html is not None:
+            images = BeautifulSoup(html, 'html.parser').find_all("img")
+        elif soup is not None:
+            images = copy.copy(soup).find_all("img")
+        else:
+            print("\u001b[31mERROR: WRONG INITIALIZATION OF PARSER")
 
         products = []
         for image in images:
@@ -17,7 +21,7 @@ class Parser:
                     products.append({'parent': curr_parent, 'img': image['src'], 'href': curr_parent['href']})
                     break
                 if not curr_parent.parent:
-                    print("Reached the bedrock, seeing next image")
+                    # print("Reached the bedrock, seeing next image")
                     break
 
         for i, product in enumerate(products):
@@ -30,17 +34,15 @@ class Parser:
                     products[i].pop('parent')
                     break
                 if not curr_parent.parent:
-                    print("Reached the bedrock, seeing next product")
+                    # print("Reached the bedrock, seeing next product")
                     break
-
-        for product in products:
-            print(product['text'], product['img'], product['href'], sep='\n\t', end='\n')
+                    
         return products
 
 
 def main():
     with open('test.html', encoding='utf-8') as file:
-        parser = Parser(file)
+        parser = Parser(html=file)
 
     parser.find_product_groups()
 
