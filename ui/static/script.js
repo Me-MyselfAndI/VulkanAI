@@ -10,8 +10,9 @@ showLoader = function(e) {
 
 document.getElementById("search").addEventListener("submit", function(event) {
   event.preventDefault();
-
+  showLoader(event);
   window.location.href = "http://127.0.0.1:8000/views/search-result";
+
 });
 
 

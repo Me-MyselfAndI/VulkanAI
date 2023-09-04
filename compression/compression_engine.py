@@ -82,6 +82,8 @@ class CompressionEngine:
             file.write(html_content)
             print("Saved")
 
+        return html_content
+
 
 def main():
     compression_engine = CompressionEngine()
