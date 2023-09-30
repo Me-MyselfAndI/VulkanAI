@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, render_template_string
-from web_search.search_engine import SearchEngine
+#from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 from compression.compression_engine import CompressionEngine
 import yaml
@@ -8,7 +8,7 @@ import yaml
 views = Blueprint(__name__, "views")
 
 #Get Chat GPT API
-with open(r'../keys/keys.yaml') as keys_file:
+with open(r'..\keys\keys.yaml') as keys_file:
     keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
@@ -17,10 +17,14 @@ with open(r'../keys/keys.yaml') as keys_file:
 def home():
     return render_template("index.html")
 
+@views.route("/format-search")
+def format_search(query):
+    #print(gpt_engine.get_response("White watch on Amazon"))
+    formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query " + str(query))
+    print(formattedSearch)
+
 @views.route("/search-result", methods=['GET'])
 def search_result():
-
-    print(gpt_engine.get_response("White watch on Amazon"))
     compression_engine = CompressionEngine()
 
     return render_template(compression_engine.generate_marketplace_html(url='https://www.amazon.com/s?k=white+watch&crid=GVER7X5ZPBD&sprefix=white+watch%2Caps%2C234&ref=nb_sb_noss_1'))
