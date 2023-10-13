@@ -1,3 +1,4 @@
+//Request to call python functions
 let xhr = null;
 getXmlHttpRequestObject = function () {
     if (!xhr) {
@@ -19,24 +20,16 @@ showLoader = function(e) {
 document.getElementById("search").addEventListener("submit", function(event) {
     xhr = null;
     event.preventDefault();
-    //showLoader(event);
+
     let inputValue = document.getElementById("search")[0].value;
     console.log(inputValue);
-    /*
-    $.ajax({
-      type: "GET",
-      url: "../views/format-search",
-      data: { param: inputValue}
-    }).done(function() {
 
-    });*/
-    //window.location.href = "http://127.0.0.1:8000/views/search-result";
     xhr = getXmlHttpRequestObject();
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
     xhr.send(JSON.stringify({"data": inputValue}));
-
+    window.location.href = "http://127.0.0.1:8000/views/search-result";
 });
 
 
