@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 from compression.compression_engine import CompressionEngine
-import yaml, os
+import yaml, os, flask, json
 
 views = Blueprint(__name__, "views")
 search_engine = SearchEngine()
@@ -28,7 +28,6 @@ def search_result():
         print(formattedSearch)
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
-        #formattedSearch.strip("\"")
         search_engine.update_links(formattedSearch.strip("\""), start_entry=0)
         # Open link (default opens 0th link, otherwise use link_number argument)
         page = search_engine.get_first_website()
@@ -42,6 +41,13 @@ def search_result():
             for i in range(len(css_code)):
                 css_file.write(css_code[i])
             print("Saved CSS")
+        #Send success message so we can start transfering user to new page
+        message = received_data['data']
+        return_data = {
+            "status": "success",
+            "message": f"received: {message}"
+        }
+        flask.Response(response=json.dumps(return_data), status=201)
 
     return render_template("result.html")
     """# Write css into file to connect it to html
