@@ -17,6 +17,15 @@ showLoader = function(e) {
     document.getElementById('loader').style.visibility = 'show';
 }
 
+//Move user search result page
+function sendToNewPage() {
+    // Check response is ready or not
+    if (xhr.readyState == 4 && xhr.status == 201) {
+        console.log("Sending user to new page");
+        window.location.href = "http://127.0.0.1:8000/views/search-result";
+    }
+}
+
 document.getElementById("search").addEventListener("submit", function(event) {
     xhr = null;
     event.preventDefault();
@@ -29,7 +38,7 @@ document.getElementById("search").addEventListener("submit", function(event) {
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
     xhr.send(JSON.stringify({"data": inputValue}));
-    window.location.href = "http://127.0.0.1:8000/views/search-result";
+    xhr.onreadystatechange = sendToNewPage();
 });
 
 
