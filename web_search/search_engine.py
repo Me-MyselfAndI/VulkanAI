@@ -58,7 +58,7 @@ if __name__ == '__main__':
     search_engine = SearchEngine()
     # Use update-links method to refresh the search results (stored inside the class).
     # Start entry is 0 by default, it's the pagination offset
-    search_engine.update_links("Chupa-chups", start_entry=0)
+    search_engine.update_links("Used Honda Sedan for sale with 130k or less miles under 6k in good condition within 30 miles of Atlanta", start_entry=0)
     # Open link (default opens 0th link, otherwise use link_number argument)
     page = search_engine.get_first_website()
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
