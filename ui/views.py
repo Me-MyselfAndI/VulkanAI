@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, render_template_string
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
-from compression.compression_engine import CompressionEngine
+#from compression.compression_engine import CompressionEngine
 import yaml, os, flask, json
 
 views = Blueprint(__name__, "views")
@@ -16,7 +16,7 @@ with open(r'..\keys\keys.yaml') as keys_file:
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
     return render_template("index.html")
-
+#10121E
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     formattedSearch = ""
