@@ -81,7 +81,7 @@ def generate_website(product_info):
     print("Website generated: amazon_products.html")
 
 
-def get_product_info(soup):
+def get_product_info(soup, base_url):
     product_info = []
     for product in soup.find_all('div', {'class': 'sg-col-inner'}):
         info = {}
@@ -94,7 +94,7 @@ def get_product_info(soup):
         if title:
             info['title'] = title
         if link and link.get('href'):
-            info['link'] = urljoin(url, link.get('href'))
+            info['link'] = urljoin(base_url, link.get('href'))
         if image and image.get('src'):
             info['image'] = image.get('src')
         if info:
@@ -102,9 +102,9 @@ def get_product_info(soup):
     return product_info
 
 
-def get_ai_assessment(product, user_input):
+def get_ai_assessment(product, user_input, astica):
     try:
-        astica_result = asticaEngine.get_image_description(product['image'])
+        astica_result = astica.get_image_description(product['image'])
 
         prompt = f"Given the user's preference of '{user_input}', does the product titled '{product['title']}' and described as '{astica_result}' match the " \
                  f"criteria? Answer yes or no only "
