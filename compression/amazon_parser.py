@@ -88,7 +88,7 @@ def get_product_info(soup):
         try:
             title = product.text
         except Exception:
-            title = product.find('span').text#, {'class': 'a-size-medium'})
+            title = product.find('span').text  # , {'class': 'a-size-medium'})
         link = product.find('a', {'class': 'a-link-normal'})
         image = product.find('img', {'class': 's-image'})
         if title:
@@ -116,12 +116,14 @@ def get_ai_assessment(product, user_input):
     except Exception:
         return "no"
 
+
 def filter_products(product_info, user_input):
     filtered_products = []
     for product in product_info:
         if get_ai_assessment(product, user_input):
             filtered_products.append(product)
     return filtered_products
+
 
 def main():
     url = 'https://www.amazon.com/s?k=white+watch&crid=GVER7X5ZPBD&sprefix=white+watch%2Caps%2C234&ref=nb_sb_noss_1'
@@ -136,6 +138,7 @@ def main():
     filtered_product_info = filter_products(product_info, user_input)
 
     generate_website(filtered_product_info)
+
 
 if __name__ == "__main__":
     main()
