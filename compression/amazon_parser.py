@@ -123,17 +123,12 @@ def filter_products(product_info, user_input):
             filtered_products.append(product)
     return filtered_products
 
-
-if __name__ == "__main__":
-    gptEngine = GPTEngine("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", "org-v7zVnLJHsAUIJqpFrCXVIxzN")
-    asticaEngine = AsticaEngine('B8757667-43F8-42A9-83B0-43E53FAA5224CD725B78-7776-4EA2-873A-946831E2F562')
-
+def main():
     url = 'https://www.amazon.com/s?k=white+watch&crid=GVER7X5ZPBD&sprefix=white+watch%2Caps%2C234&ref=nb_sb_noss_1'
     soup = scrape_website(url)
     product_info = get_product_info(soup)
     for product in product_info:
         print(product)
-
 
     # Get user input
     user_input = input("Please specify your product preferences: ")
@@ -141,3 +136,6 @@ if __name__ == "__main__":
     filtered_product_info = filter_products(product_info, user_input)
 
     generate_website(filtered_product_info)
+
+if __name__ == "__main__":
+    main()
