@@ -36,5 +36,21 @@
   }
 
   #search-input {
-    height: 150px;
+    height: 60px;
+    max-height: 300px;
   }
+
+  #search-button {
+    margin: 1% 43%;
+  }
+  /*
+textarea {
+  width:200px;
+  resize:none;
+  overflow:hidden;
+  font-size:18px;
+  height:1.1em;
+  padding:2px;
+}
+
+   */
