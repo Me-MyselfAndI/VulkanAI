@@ -42,10 +42,17 @@
       </div>
     </div>
   </div>
-
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
     <header class="mb-auto">
         <nav class="nav nav-masthead justify-content-center float-md-end">
+            <!--Input field for website you prefer to search on-->
+            <div class="input-group" id="pref-website">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="">Prefered Website</span>
+              </div>
+              <input type="text" class="form-control">
+            </div>
+
           <a class="nav-link fw-bold py-1 px-0 active" aria-current="page" href="#">Search</a>
           <a class="nav-link fw-bold py-1 px-0" href="#">About</a>
           <a class="nav-link fw-bold py-1 px-0" href="#">Contact</a>
@@ -58,8 +65,13 @@
 
       <!--Search Bar-->
     <div class="input-container">
-        <textarea id="search-input" placeholder="Go wild..."></textarea>
+        <form id="search">
+             <textarea id="search-input" placeholder="Go wild..."></textarea>
+            <!--<input type="text" class="input" id="search-input" name="txt" placeholder="Go Wild...">-->
+        </form>
     </div>
+
+      <button type="button" id="search-button" class="btn btn-outline-warning">Search</button>
 
     <footer class="mt-auto text-white-50">
       <p>VulcanAI &copy; 2023</p>

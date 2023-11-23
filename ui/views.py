@@ -8,7 +8,7 @@ views = Blueprint(__name__, "views")
 search_engine = SearchEngine()
 
 #Get Chat GPT API
-with open(r'..\keys\keys.yaml') as keys_file:
+with open(r'keys\keys.yaml') as keys_file:
     keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
