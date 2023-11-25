@@ -26,11 +26,11 @@ function sendToNewPage() {
     }
 }
 
-document.getElementById("search").addEventListener("submit", function(event) {
+document.getElementById("search-button").addEventListener("click", function(event) {
     xhr = null;
     event.preventDefault();
 
-    let inputValue = document.getElementById("search")[0].value;
+    let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
     console.log(inputValue);
 
     xhr = getXmlHttpRequestObject();
@@ -47,22 +47,27 @@ var span = $('<span>').css('display','inline-block')
                       .appendTo('body').css('visibility','hidden');
 function initSpan(textarea){
   span.text(textarea.text())
-      .width(textarea.width())
+      .width("0")
       .css('font',textarea.css('font'));
 }
-/*
+
 $('textarea').on({
     input: function(){
        var text = $(this).val();
        span.text(text);
-       $(this).height(text ? span.height() : '1.1em');
+       $(this).height('1.1em');
+        //Expand bar to its full height if needed
+       //$(this).height(text ? span.height() : '1.1em');
     },
     focus: function(){
+        var text = $(this).val();
        initSpan($(this));
+       //Make search bar small if there is nothing in it
+       if(text.length === 0) console.log("empty");
     },
     keypress: function(e){
        //cancel the Enter keystroke, otherwise a new line will be created
        if(e.which == 13) e.preventDefault();
     }
 });
- */
+
