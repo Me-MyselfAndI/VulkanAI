@@ -4,46 +4,51 @@
     margin: 50px auto;
   }
 
-  #search-input {
-    width: 100%;
-    padding: 8px;
-    font-size: 20px;
-    border: 4px solid #fa4121;
-    border-radius: 25px;
-    resize: none;
-    transition: height 0.4s ease-in-out;
-    min-height: 50px;
-    color:white;
-    outline: none;
-  }
+#search-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 20px;
+  border: 4px solid #fa4121;
+  border-radius: 25px;
+  resize: none;
+  transition: height 0.4s ease-in-out;
+  min-height: 50px;
+  color:white;
+  outline: none;
+}
 
-  #search-input:focus {
-    outline: none;
-    transition: all 0.3s ease-in-out;
-    border-color: #FBB321;
-  }
+#search-input:focus {
+  outline: none;
+  transition: all 0.3s ease-in-out;
+  border-color: #FBB321;
+}
 
-  #search-input:not(:focus) {
-    transition: all 0.3s ease-in-out;
-  }
+#search-input:not(:focus) {
+  transition: all 0.3s ease-in-out;
+}
 
-  #search-input::placeholder {
-    color: lightgray;
-  }
+#search-input::placeholder {
+  color: lightgray;
+}
 
-  #search-input {
-    overflow-y: hidden;
-  }
+#search-input {
+  overflow-y: hidden;
+}
 
-  #search-input {
-    height: 60px;
-    max-height: 300px;
-  }
+#search-input {
+  height: 60px;
+  max-height: 400px;
+}
 
-  #search-button {
-    margin: 1% 43%;
-  }
-  /*
+#search-button {
+  margin: 1% 43%;
+  margin-bottom: 9%;
+}
+
+#search-button:hover {
+  color:#fa4121;
+}
+
 textarea {
   width:200px;
   resize:none;
@@ -53,4 +58,3 @@ textarea {
   padding:2px;
 }
 
-   */
