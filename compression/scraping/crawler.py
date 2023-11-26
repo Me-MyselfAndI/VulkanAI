@@ -1,5 +1,5 @@
 # crawler.py
-import parser
+import compression.scraping.parser
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
