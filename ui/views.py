@@ -3,15 +3,20 @@ from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 #from compression.compression_engine import CompressionEngine
 import yaml, os, flask, json
+from compression.main import ScrapingController
+
+#Init Classes
 
 views = Blueprint(__name__, "views")
-search_engine = SearchEngine()
 
 #Get Chat GPT API
 with open(r'keys\keys.yaml') as keys_file:
     keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
+
+scraping_controller = ScrapingController(gpt_engine)
+search_engine = SearchEngine()
 
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
@@ -26,22 +31,36 @@ def search_result():
         print(f"received data: {received_data['data']}")
         formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
         print(formattedSearch)
+
+        #get_parsed_website_html()
+
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
         search_engine.update_links(formattedSearch.strip("\""), start_entry=0)
         # Open link (default opens 0th link, otherwise use link_number argument)
         page = search_engine.get_first_website()
+        #Get page url
+        website_url = page["url"]
+        print(website_url)
+        website = {
+             'url': website_url,
+             'html': page["html"]
+        }
+
         #Save HTML
-        with open("templates/result.html", "w", encoding="utf-8") as file:
-            file.write(page['html'])
+        with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+            file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
             print("Saved")
+        """
         #Save CSS
         css_code = page['css']
-        with open('static/result.css', 'w') as css_file:
+        with open('ui/static/result.css', 'w') as css_file:
             for i in range(len(css_code)):
                 css_file.write(css_code[i])
             print("Saved CSS")
         #Send success message so we can start transfering user to new page
+        """
+        #Finish receiving data
         message = received_data['data']
         return_data = {
             "status": "success",
