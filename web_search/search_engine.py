@@ -8,7 +8,7 @@ import requests
 class SearchEngine:
     def __init__(self):
         self.last_search = {"res": [], "prompt": ""}
-        with open("../keys/serp_api_key.txt") as file:
+        with open("keys/serp_api_key.txt") as file:
             self.key = file.read()
 
     def update_links(self, prompt, start_entry=0, search_website=None):
