@@ -29,10 +29,9 @@ def search_result():
     if request.method == "POST":
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
+        print(f"Prefered Website: {received_data['pref-website']}")
         formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
         print(formattedSearch)
-
-        #get_parsed_website_html()
 
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset

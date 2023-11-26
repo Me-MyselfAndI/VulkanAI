@@ -42,14 +42,16 @@ document.getElementById("search-button").addEventListener("click", function(even
     xhr = null;
     event.preventDefault();
 
+    let prefWebsite = document.getElementById("website-value").value;//Get prefered website for searching
     let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
     console.log(inputValue);
+    console.log(prefWebsite)
 
     xhr = getXmlHttpRequestObject();
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
-    xhr.send(JSON.stringify({"data": inputValue}));
+    xhr.send(JSON.stringify({"data": inputValue, "pref-website": prefWebsite}));
     xhr.onreadystatechange = sendToNewPage();
 });
 
@@ -82,4 +84,5 @@ $('textarea').on({
        if(e.which == 13) e.preventDefault();
     }
 });
+
 
