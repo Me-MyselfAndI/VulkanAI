@@ -17,11 +17,23 @@ showLoader = function(e) {
     document.getElementById('loader').style.visibility = 'show';
 }
 
+//Non Production Kostyl
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+
 //Move user search result page
 function sendToNewPage() {
+    console.log("Sending user to new page");
+    wait(5000);//Wait a little before rendering page
+    window.location.href = "http://127.0.0.1:8000/views/search-result";
     // Check response is ready or not
-    if (xhr.readyState == 4 && xhr.status == 201) {
-        console.log("Sending user to new page");
+    if (xhr.status == 201) {//xhr.readyState == 4 && xhr.status == 201
+
         window.location.href = "http://127.0.0.1:8000/views/search-result";
     }
 }
