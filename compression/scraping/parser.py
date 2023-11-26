@@ -217,7 +217,9 @@ class Parser:
                 href = menu_items[ancestor]['items'][i]['href']
                 if href is not None and not re.match(r'^\w+:?//', href):
                     menu_items[ancestor]['items'][i]['href'] = urljoin(base_url, href)
-
+                menu_items[ancestor]['items'][i].pop('tag')
+                menu_items[ancestor]['items'][i].pop('score')
+                menu_items[ancestor]['items'][i].pop('descendant-depth')
 
         return menu_items
 
