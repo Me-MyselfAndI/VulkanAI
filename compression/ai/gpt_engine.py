@@ -15,8 +15,9 @@ class GPTEngine:
 
         if api_key is None:
             with open(r'keys\keys.yaml') as keys_file:
-                api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']['api-url']
-                org_url = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']['org-url']
+                keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']
+                api_key = keys['api-url']
+                org_url = keys['org-url']
 
         self.model = 'gpt-4-1106-preview'
         self.client = openai.OpenAI(api_key=api_key, organization=org_url)
