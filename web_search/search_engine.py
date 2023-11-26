@@ -37,7 +37,6 @@ class SearchEngine:
     def get_website(self, link_number):
         website_url = self.last_search["res"][link_number]
         response = requests.get(website_url)
-        # html = response.text
 
         website_content = response.content
         soup = BeautifulSoup(website_content, 'html.parser')
@@ -51,7 +50,7 @@ class SearchEngine:
             if css_response.status_code == 200:
                 css_content.append(css_response.text)
 
-        return {'html': soup.prettify(), 'css': css_content}
+        return {'html': soup.prettify(), 'css': css_content, 'url': website_url}
 
 
 # Use case:
