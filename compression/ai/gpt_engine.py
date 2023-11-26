@@ -3,10 +3,21 @@ from time import sleep
 
 import openai
 from multiprocessing.pool import Pool
+import yaml
 
 
 class GPTEngine:
-    def __init__(self, api_key, org_url):
+    def __init__(self, api_key=None, org_url=None):
+        if (api_key is None) != (org_url is None):
+            print('\u001b[31mOne of the keys for gpt was default while other was provided.'
+                  'Either provide both GPT keys, or use both default')
+            return
+
+        if api_key is None:
+            with open(r'keys\keys.yaml') as keys_file:
+                api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']['api-url']
+                org_url = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']['org-url']
+
         self.model = 'gpt-4-1106-preview'
         self.client = openai.OpenAI(api_key=api_key, organization=org_url)
 
