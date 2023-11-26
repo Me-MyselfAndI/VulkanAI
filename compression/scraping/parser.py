@@ -1,7 +1,8 @@
 import copy
 from bs4 import BeautifulSoup
 import math
-
+import re
+from urllib.parse import urljoin
 
 def _sigmoid(x, multiplier):
     return 1 / (1 + math.exp(-x * multiplier))
@@ -91,7 +92,7 @@ class Parser:
 
         return products
 
-    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
+    def find_website_menu(self, base_url, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
                           max_link_search_depth=5):
         if self.soup is None:
             print("\u001b[31mERROR: PARSER UNINITIALIZED")
@@ -99,30 +100,30 @@ class Parser:
 
         def calculate_likelihood_score(element):
             likelihood_score = 0
-
             # TODO: Criterion 1: Check if element has similar width and height, but not both
 
             # Criterion 2: Check if element contains words or pictograms (less than 3 words)
             text = element.get_text()
             word_count = len(text.split())
             # TODO: implement sigmoid instead
-            if word_count != 0:
-                if word_count <= 1:
-                    likelihood_score += 0.20
-                elif word_count <= 2:
-                    likelihood_score += 0.20
-                elif word_count <= 3:
-                    likelihood_score += 0.20
-                elif word_count <= 4:
-                    likelihood_score += 0.15
-                elif word_count <= 5:
-                    likelihood_score += 0.15
-                elif word_count <= 6:
-                    likelihood_score += 0.15
-                elif word_count <= 7:
-                    likelihood_score += 0.10
-                elif word_count >= 10:
-                    likelihood_score -= 0.1 * (word_count - 10)
+            if word_count == 0:
+                likelihood_score -= 5
+            elif word_count <= 1:
+                likelihood_score += 0.20
+            elif word_count <= 2:
+                likelihood_score += 0.20
+            elif word_count <= 3:
+                likelihood_score += 0.20
+            elif word_count <= 4:
+                likelihood_score += 0.15
+            elif word_count <= 5:
+                likelihood_score += 0.15
+            elif word_count <= 6:
+                likelihood_score += 0.15
+            elif word_count <= 7:
+                likelihood_score += 0.10
+            elif word_count >= 10:
+                likelihood_score -= 0.1 * (word_count - 10)
 
             # TODO: Criterion 3: Check if hovering over the element reveals another element
 
@@ -212,6 +213,11 @@ class Parser:
 
         for ancestor in menu_items.copy():
             menu_items[ancestor]['score'] = sum([item['score'] for item in elements]) / len(elements)
+            for i in range(len(menu_items[ancestor]['items'])):
+                href = menu_items[ancestor]['items'][i]['href']
+                if href is not None and not re.match(r'^\w+:?//', href):
+                    menu_items[ancestor]['items'][i]['href'] = urljoin(base_url, href)
+
 
         return menu_items
 
@@ -258,7 +264,7 @@ def main():
     with open('test.html', encoding='utf-8') as file:
         parser = Parser(html=file)
 
-    print('Text content:\n\t', parser.find_text_content())
+    print('Website Menu:\n\t', parser.find_website_menu(input("Enter the current website: ")))
 
     # parser.find_marketplace_product_groups()
 
