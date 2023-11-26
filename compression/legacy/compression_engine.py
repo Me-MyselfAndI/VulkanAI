@@ -24,7 +24,7 @@ class CompressionEngine:
         driver.quit()
         return products
 
-    def generate_marketplace_html(self, url, output_file="amazon_products.html"):
+    def generate_container_html(self, url, output_file="amazon_products.html"):
         html_content = """
             <!DOCTYPE html>
             <html lang="en">
@@ -83,6 +83,8 @@ class CompressionEngine:
             print("Saved")
 
         return html_content
+
+    def
 
 
 def main():
