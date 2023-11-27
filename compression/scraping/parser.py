@@ -152,6 +152,9 @@ class Parser:
                 # Store its Nth ancestor (you can choose N based on your design)
                 nth_ancestor = element
                 for _ in range(N):
+                    # FIXME: Temporary fix; may not work
+                    if nth_ancestor.parent is None:
+                        break
                     nth_ancestor = nth_ancestor.parent
 
                 if nth_ancestor not in menu_items:
