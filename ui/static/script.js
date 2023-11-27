@@ -29,7 +29,7 @@ function wait(ms){
 //Move user search result page
 function sendToNewPage() {
     console.log("Sending user to new page");
-    wait(5000);//Wait a little before rendering page
+    wait(13000);//Wait a little before rendering page
     window.location.href = "http://127.0.0.1:8000/views/search-result";
     // Check response is ready or not
     if (xhr.status == 201) {//xhr.readyState == 4 && xhr.status == 201
@@ -69,19 +69,22 @@ $('textarea').on({
     input: function(){
        var text = $(this).val();
        span.text(text);
-       $(this).height('1.1em');
-        //Expand bar to its full height if needed
-       //$(this).height(text ? span.height() : '1.1em');
+       //Extend search bar as user keeps typing
+       if(text.length % 50 === 0) $(this).height('1.2em');
+       //Make search bar small if there is nothing in it
+       if(text.length === 0) $(this).height('40px');
     },
     focus: function(){
-        var text = $(this).val();
        initSpan($(this));
-       //Make search bar small if there is nothing in it
-       if(text.length === 0) console.log("empty");
     },
     keypress: function(e){
        //cancel the Enter keystroke, otherwise a new line will be created
        if(e.which == 13) e.preventDefault();
+    },
+    keydown: function (e) {
+        var text = $(this).val();
+        //Decrease size of search bar as text gets deleted
+        if(e.which === 8 && text.length % 50 === 0 && text.length > 30) $(this).css('height', '-=' + 20 + 'px');
     }
 });
 

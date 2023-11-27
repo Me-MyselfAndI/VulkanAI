@@ -18,10 +18,11 @@ with open(r'keys\keys.yaml') as keys_file:
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
 
+#MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
     return render_template("index.html")
-#10121E
+
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     formattedSearch = ""
@@ -46,20 +47,38 @@ def search_result():
              'html': page["html"]
         }
 
-        #Save HTML
-        with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-            file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
-            print("Saved")
-        """
-        #Save CSS
-        css_code = page['css']
-        with open('ui/static/result.css', 'w') as css_file:
-            for i in range(len(css_code)):
-                css_file.write(css_code[i])
-            print("Saved CSS")
+        #Save HTML ---------------------------------------------------------------
+        #with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+        #    file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
+        #    print("Saved")
+
+        #Add Overlay button which allows users to go back on page
+        cssLink = '\n<link href="../static/overlaybutton.css" rel="stylesheet">'
+        scriptLink = "<script src='../static/redirect.js'></script>\n"
+        headTag = '<head>'
+        bodyTag = '<body>'
+        endBodyTag = '</body>'
+        backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
+        content = ""
+        with open("ui/templates/result.html", "r", encoding="utf-8") as html_file:#Get current content of the html file to change it
+            content = html_file.read()
+        with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
+            #Add link to button css file
+            if headTag in content:
+                addPos = len(headTag)
+                pos = content.index(headTag) + addPos
+                content = content[:pos] + cssLink + content[pos:]
+            # Add button itself
+            if bodyTag in content:
+                addPos = len(bodyTag)
+                pos = content.index(bodyTag) + addPos
+                content = content[:pos] + backButton + content[pos:]
+            # Add script to redirect user back to search
+            if endBodyTag in content:
+                pos = content.index(endBodyTag)
+                content = content[:pos] + scriptLink + content[pos:]
+            result_file.write(content)
         #Send success message so we can start transfering user to new page
-        """
-        #Finish receiving data
         message = received_data['data']
         return_data = {
             "status": "success",
@@ -67,10 +86,10 @@ def search_result():
         }
         flask.Response(response=json.dumps(return_data), status=201)
 
+
     return render_template("result.html")
-    """# Write css into file to connect it to html
-    #Insert link to css into html text that will be rendered to connect them
-    css_link = '<link href="../static/result.css" rel="stylesheet">\n'
+    #Extra Code
+    """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
     if tag in page['html']:
         add_pos = len(tag)
@@ -80,6 +99,14 @@ def search_result():
         return render_template_string(new_html)
     except:
         return render_template_string(page['html'])"""
+    """
+    #Save CSS
+    css_code = page['css']
+    with open('ui/static/result.css', 'w') as css_file:
+        for i in range(len(css_code)):
+            css_file.write(css_code[i])
+        print("Saved CSS")
+    """
 
 #TESTING FUNCTIONS, CAN BE DELETED
 @views.route("/test", methods=["POST", "GET", "PUT"])
