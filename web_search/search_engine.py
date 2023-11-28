@@ -1,7 +1,8 @@
 from urllib.parse import urlparse, urljoin
 
 from bs4 import BeautifulSoup
-from serpapi import GoogleSearch as _RunSearch
+# from serpapi import GoogleSearch as _RunSearch
+from serpapi import DuckDuckGoSearch as _RunSearch
 import requests
 
 
@@ -25,6 +26,8 @@ class SearchEngine:
         raw_search_results = search.get_dict()
 
         results = []
+        if 'organic_results' not in raw_search_results:
+            print("\u001b[31mMISSING SEARCH RESULTS:", raw_search_results)
         for curr_raw_result in raw_search_results["organic_results"]:
             results.append(curr_raw_result["link"])
 
