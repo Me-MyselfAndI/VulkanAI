@@ -212,7 +212,7 @@ class Parser:
                     )
                 ) == set():
                     menu_items.pop(ancestor)
-                    continue
+                    break
 
         for ancestor in menu_items.copy():
             menu_items[ancestor]['score'] = sum([item['score'] for item in elements]) / len(elements)

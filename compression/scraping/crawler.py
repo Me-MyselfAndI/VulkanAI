@@ -35,38 +35,40 @@ class Crawler:
 
     def navigate_to_relevant_page(self, search_query):
         html_content = self.get_page_source(self.base_url)
-        print(0)
         parser = Parser(html=html_content)
-        print(1)
         menu_items_dict = parser.find_website_menu(self.base_url)
+        all_menu_items = [{'item': item, 'score': self.query_gpt_for_relevance(item.get('text', ''), search_query)} for ancestor in menu_items_dict.values() for item in ancestor.get('items', [])]
+        print(f'Total of {len(all_menu_items)} items before purging')
+        for item in all_menu_items:
+            if item['score'] <= 3 or not item['item']['href']:
+                all_menu_items.remove(item)
+                continue
+        print(f'Total of {len(all_menu_items)} items after purging')
 
-        print(2)
-        all_menu_items = [item for ancestor in menu_items_dict.values() for item in ancestor.get('items', [])]
-        print(3, len(all_menu_items))
-
-        best_score = -1
-        all_menu_items.sort(key=lambda x: -self.query_gpt_for_relevance(x.get('text', ''), search_query))
+        all_menu_items.sort(key=lambda x: -x['score'])
+        print(all_menu_items[0], all_menu_items[0].get('item'), all_menu_items[0].get('score'))
         # Navigate to the menu item that meets the relevance threshold
-        for i, item in enumerate(all_menu_items):
-            menu_text = item.get('text', '').strip()
-            print(item)
-            link = item.get('href')
+        for i, tag in enumerate(all_menu_items):
+            item, score = tag.get('item'), tag.get('score')
+            print(item, score)
+            # if score <= 3:
+            #     return None
+
+            # menu_text = item.get('text', '').strip()
+            link = item.get('href', '')
             if not link:
                 print('NO LINK', item)
                 continue
 
             try:
-                print(4)
                 self.driver.get(link)
-                print(5)
                 self.handle_dropdowns(search_query)
-                print(6)
                 if self.check_page_relevance(search_query):
-                    print(7)
                     return self.driver.page_source
             except Exception as e:
                 print(f"\u001b[31mError processing {link}: {e}\u001b[0m")
 
+        print('\u001b[31mReturned None - staying on the same page\u001b[0m')
         return None
 
     def query_gpt_for_relevance(self, menu_text, search_query):
@@ -98,6 +100,7 @@ class Crawler:
         is_relevant = self.gpt_engine.get_response(
             f"Is this page '{self.driver.current_url}' relevant to the query '{search_query}'? Do not type anything, "
             f"just answer with a number from 1 to 5 with 5 being a spot-on answer and 1 being completely unrelated")
+        print(is_relevant)
         return is_relevant >= "3"
 
 
