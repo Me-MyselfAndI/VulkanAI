@@ -1,4 +1,3 @@
-from compression.scraping.parser import Parser
 from compression.scraping.crawler import Crawler
 from compression.ai.gpt_engine import GPTEngine
 
@@ -11,11 +10,8 @@ class ScrapingController:
             self._gpt = gpt
 
     def get_parsed_website_html(self, website, search_query):
-        parser = Parser(website['html'])
-        menu_items = parser.find_website_menu(website['url'])
-
         crawler = Crawler(website['url'], self._gpt)
-        result = crawler.navigate_to_relevant_page(search_query, menu_items)
+        result = crawler.navigate_to_relevant_page(search_query)
 
         return result
 def main():
