@@ -18,13 +18,29 @@ class Crawler:
     def navigate_to_relevant_page(self, search_query, menu_items_dict):
         all_menu_items = [item for value in menu_items_dict.values() for item in value.get('items', [])]
 
-        sorted_items = sorted(all_menu_items, key=lambda item: self.gpt_engine.get_response(
-            f"How relevant is '{item.get('text', '').strip()}' to the query '{search_query}'?"))
+        print('1', len(all_menu_items))
+
+        def temp(item):
+            result = (self.gpt_engine.get_response(
+                f"How relevant is '{item.get('text', '').strip()}' to the query '{search_query}' on the scale from 1 to 5? You just need to give me the number, nothing else is needed"))
+            try:
+                result = int(result)
+            except:
+                print(f"Cannot convert to int {result}")
+                return 0
+
+            print(item.get('text', '').strip(), result)
+            return result
+
+        sorted_items = sorted(all_menu_items, key=lambda item: temp(item))
+        print('2')
 
         for item in sorted_items:
             link = item.get('href')
             if not link:
+                print(item)
                 continue
+            print('3')
 
             try:
                 self.driver.get(link)
@@ -34,6 +50,7 @@ class Crawler:
 
             except Exception as e:
                 print(f"Error processing {link}: {e}")
+        print('4')
 
         return None
 
@@ -53,4 +70,4 @@ class Crawler:
     def check_page_relevance(self, search_query):
         is_relevant = self.gpt_engine.get_response(
             f"Is this page '{self.driver.current_url}' relevant to the query '{search_query}'? Respond with Yes or No")
-        return is_relevant == "Yes"
+        return is_relevant.lower().rstrip('.') == "yes"

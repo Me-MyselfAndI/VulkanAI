@@ -269,7 +269,7 @@ def main():
     with open('test.html', encoding='utf-8') as file:
         parser = Parser(html=file)
 
-    print('Website Menu:\n\t', parser.find_website_menu(input("Enter the current website: ")))
+    print('Website Menu:\n\t', parser.find_text_content())
 
     # parser.find_marketplace_product_groups()
 
