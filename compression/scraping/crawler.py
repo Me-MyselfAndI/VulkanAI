@@ -33,11 +33,8 @@ class Crawler:
         self.driver.get(url)
         return self.driver.page_source
 
-    def navigate_to_relevant_page(self, search_query):
-        html_content = self.get_page_source(self.base_url)
-        parser = Parser(html=html_content)
-        menu_items_dict = parser.find_website_menu(self.base_url)
-        all_menu_items = [{'item': item, 'score': self.query_gpt_for_relevance(item.get('text', ''), search_query)} for ancestor in menu_items_dict.values() for item in ancestor.get('items', [])]
+    def navigate_to_relevant_page(self, search_query, menu_items):
+        all_menu_items = [{'item': item, 'score': self.query_gpt_for_relevance(item.get('text', ''), search_query)} for ancestor in menu_items.values() for item in ancestor.get('items', [])]
         print(f'Total of {len(all_menu_items)} items before purging')
         for item in all_menu_items:
             if item['score'] <= 3 or not item['item']['href']:
