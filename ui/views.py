@@ -41,6 +41,11 @@ def search_result():
         page = search_engine.get_first_website()
         #Get page url
         website_url = page["url"]
+        #If user has a prefered website to search on, use that website
+        if received_data['pref-website'] == "":
+            print("No prefered website")
+        else:
+            website_url = received_data['pref-website']
         print(website_url)
         website = {
              'url': website_url,
@@ -53,7 +58,8 @@ def search_result():
         #    print("Saved")
 
         #Add Overlay button which allows users to go back on page
-        cssLink = '\n<link href="../static/overlaybutton.css" rel="stylesheet">'
+        #Might not be neccessary right now cause we putting all of the results in template
+        cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">'
         scriptLink = "<script src='../static/redirect.js'></script>\n"
         headTag = '<head>'
         bodyTag = '<body>'
@@ -78,6 +84,19 @@ def search_result():
                 pos = content.index(endBodyTag)
                 content = content[:pos] + scriptLink + content[pos:]
             result_file.write(content)
+
+        #Transfer template to final result file and start transfering important data into the template
+        template = ""
+        with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
+            template = template_file.read()
+        with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
+            result_file.write(template)
+            print(content)
+            for line in (line.strip("\n") for line in content):
+               if "h2" in line:
+                   print(line)
+
+
         #Send success message so we can start transfering user to new page
         message = received_data['data']
         return_data = {
@@ -87,7 +106,7 @@ def search_result():
         flask.Response(response=json.dumps(return_data), status=201)
 
 
-    return render_template("result.html")
+    return render_template("final_result.html")
     #Extra Code
     """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
