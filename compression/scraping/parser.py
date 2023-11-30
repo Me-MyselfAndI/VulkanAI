@@ -1,4 +1,6 @@
 import copy
+import random
+
 from bs4 import BeautifulSoup
 import math
 import re
@@ -49,6 +51,10 @@ def _find_common_ancestral_path(element1, element2, min_depth=0, max_depth=10):
 
 
 class Parser:
+    text_tag_types = {
+        1.0: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'a', 'span', 'button', 'code'],
+        0.7: ['ul', 'ol']
+    }
     def __init__(self, html=None, soup=None):
         if html is not None:
             self.soup = BeautifulSoup(html, 'html.parser')
@@ -59,7 +65,7 @@ class Parser:
             print("\u001b[31mERROR: WRONG INITIALIZATION OF PARSER")
             assert False
 
-    def find_container_groups(self):
+    def find_container_groups(self, base_url, min_outer_steps_text=10, min_stop_element_count=50):
         if self.soup is None:
             print("\u001b[31mERROR: PARSER UNINITIALIZED")
             assert False
@@ -67,29 +73,66 @@ class Parser:
         images = self.soup.find_all('img')
         products = []
         for image in images:
+            print(image)
             curr_parent = image
+
             while True:
                 curr_parent = curr_parent.parent
                 if curr_parent.has_attr('href'):
-                    products.append({'parent': curr_parent, 'img': image['src'], 'href': curr_parent['href']})
+                    href = curr_parent['href']
+                    if href is not None and not re.match(r'^\w+:?//', href):
+                        href = urljoin(base_url, href)
+                    # print(f'\t\u001b[32mReached parent with href!\u001b[0m\n\t {href}')
+
+                    products.append({'parent': curr_parent, 'img': image.get('src', ''), 'href': href})
                     break
                 if not curr_parent.parent:
                     # print("Reached the bedrock, seeing next image")
                     break
 
+        products_to_delete = set()
+        for i in range(len(products)):
+            for j in range(i):
+                if products[i]['parent'] == products[j]['parent'] or products[i]['parent'] in products[j]['parent'].descendants and products[i]['text'] == products[j]['text'] or products[i]['href'] == products[j]['href']:
+                    # print(products[i]['parent'], products[j]['parent'])
+                    products_to_delete.add(j)
+                elif products[j]['parent'] in products[i]['parent'].descendants:
+                    products_to_delete.add(i)
+
+        text_tag_types = []
+        for tag_types in self.text_tag_types.values():
+            text_tag_types.extend(tag_types)
+
         for i, product in enumerate(products):
             curr_parent = product['parent']
-            while True:
+            for _ in range(min_outer_steps_text):
+                if curr_parent.parent is None or len(curr_parent.parent.find_all(text=True)) > min_stop_element_count:
+                    break
                 curr_parent = curr_parent.parent
-                text = curr_parent.find_all(text=True)
-                if text:
-                    products[i]['text'] = text
+            while True:
+                if curr_parent is None:
+                    # print('\t\u001b[31m', product, '\u001b[0m')
+                    products_to_delete.add(i)
+                    break
+                text_tags = curr_parent.find_all(text=True)
+                if text_tags:
+                    useful_text = []
+                    for text_tag in text_tags:
+                        text = text_tag.text
+                        if text is not None and str(text).strip():
+                            useful_text.append(text.strip())
+                    if not useful_text:
+                        curr_parent = curr_parent.parent
+                        continue
+                    products[i]['text'] = useful_text
                     products[i].pop('parent')
                     break
-                if not curr_parent.parent:
-                    # print("Reached the bedrock, seeing next product")
-                    break
+                curr_parent = curr_parent.parent
 
+        for i in sorted(list(products_to_delete), key=lambda x: -x):
+            products.pop(i)
+
+        print("Number of products: ", len(products))
         return products
 
     def find_website_menu(self, base_url, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
@@ -152,6 +195,9 @@ class Parser:
                 # Store its Nth ancestor (you can choose N based on your design)
                 nth_ancestor = element
                 for _ in range(N):
+                    # FIXME: Temporary fix; may not work
+                    if nth_ancestor.parent is None:
+                        break
                     nth_ancestor = nth_ancestor.parent
 
                 if nth_ancestor not in menu_items:
@@ -209,7 +255,7 @@ class Parser:
                     )
                 ) == set():
                     menu_items.pop(ancestor)
-                    continue
+                    break
 
         for ancestor in menu_items.copy():
             menu_items[ancestor]['score'] = sum([item['score'] for item in elements]) / len(elements)
@@ -225,15 +271,11 @@ class Parser:
 
     def find_text_content(self, filter_threshold=0.15):
         # Find all <p>, <h>, <table>, <a>, <span>, IN SOME SITUATIONS <div>, <ul>, <ol>
-        tag_types = {
-            1.0: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'a', 'span', 'button', 'code'],
-            0.7: ['ul', 'ol']
-        }
 
         discovered_tags = []
 
-        for likelihood_const in tag_types.keys():
-            for tag_type in tag_types[likelihood_const]:
+        for likelihood_const in self.text_tag_types.keys():
+            for tag_type in self.text_tag_types[likelihood_const]:
                 for tag in self.soup.find_all(tag_type):
                     text = tag.text.strip()
                     likelihood_score = likelihood_const * _sigmoid(len(text.split(' ')), multiplier=0.1) - 0.5
@@ -266,7 +308,7 @@ def main():
     with open('test.html', encoding='utf-8') as file:
         parser = Parser(html=file)
 
-    print('Website Menu:\n\t', parser.find_website_menu(input("Enter the current website: ")))
+    print('Website Menu:\n\t', parser.find_text_content())
 
     # parser.find_marketplace_product_groups()
 

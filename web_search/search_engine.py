@@ -1,7 +1,8 @@
 from urllib.parse import urlparse, urljoin
 
 from bs4 import BeautifulSoup
-from serpapi import GoogleSearch as _RunSearch
+# from serpapi import GoogleSearch as _RunSearch
+from serpapi import DuckDuckGoSearch as _RunSearch
 import requests
 
 
@@ -25,6 +26,8 @@ class SearchEngine:
         raw_search_results = search.get_dict()
 
         results = []
+        if 'organic_results' not in raw_search_results:
+            print("\u001b[31mMISSING SEARCH RESULTS:", raw_search_results)
         for curr_raw_result in raw_search_results["organic_results"]:
             results.append(curr_raw_result["link"])
 
@@ -46,9 +49,12 @@ class SearchEngine:
             css_url = link.get('href')
             if not bool(urlparse(css_url).netloc):
                 css_url = urljoin(website_url, css_url)
-            css_response = requests.get(css_url)
-            if css_response.status_code == 200:
-                css_content.append(css_response.text)
+            try:
+                css_response = requests.get(css_url)
+                if css_response.status_code == 200:
+                    css_content.append(css_response.text)
+            except Exception as e:
+                print(f'\u001b[33mWarning! Exception happened: \n{e}\u001b[0m')
 
         return {'html': soup.prettify(), 'css': css_content, 'url': website_url}
 
