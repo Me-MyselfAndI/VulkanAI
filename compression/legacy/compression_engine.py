@@ -84,8 +84,6 @@ class CompressionEngine:
 
         return html_content
 
-    def
-
 
 def main():
     compression_engine = CompressionEngine()

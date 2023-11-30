@@ -1,4 +1,5 @@
 import math
+from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
 import openai
@@ -33,20 +34,48 @@ class GPTEngine:
 
         return result.choices[0].message.content
 
-    def get_responses_async(self, prompt: str, args=(), batches=5):
-        pool = Pool()
+    # def get_responses_async(self, prompt: str, args=(), batches=5):
+    #     pool = Pool()
+    #     results = []
+    #     for i in range(math.ceil(len(args) / batches)):
+    #         curr_batch = args[i: i + batches + 1]
+    #         requests = [prompt.format(product) for product in curr_batch]
+    #         results.extend(
+    #             pool.imap(self.get_response, requests)
+    #         )
+    #         sleep(0.02)  # Required to wait to avoid maxing out our server capacity
+    #         print(f'\u001b[32mBatch {i}:\u001b[0m')
+    #         for j in range(batches):
+    #             print('\n\t', j, curr_batch[j])
+    #     return results
+
+    def get_responses_async(self, prompt: str, args=(), batches=10, timeout=5):
         results = []
-        for i in range(math.ceil(len(args) / batches)):
-            curr_batch = args[i: i + batches + 1]
-            results.extend(
-                pool.imap(self.get_response, [
-                    prompt.format(product) for product in curr_batch
-                ])
-            )
-            sleep(0.02)  # Required to wait to avoid maxing out our server capacity
-            print(f'\u001b[32mBatch {i}:\u001b[0m')
-            for j in range(batches):
-                print('\n\t', j, curr_batch[j])
+
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for i in range(math.ceil(len(args) / batches)):
+                curr_batch = args[i * batches: (i + 1) * batches]
+                requests = [prompt.format(product) for product in curr_batch]
+
+                # Submit each request to the ThreadPoolExecutor
+                futures.extend(
+                    executor.submit(self.get_response, request) for request in requests
+                )
+
+                sleep(0.02)  # Required to wait to avoid overloading the server
+                print(f'\u001b[32mBatch {i}:\u001b[0m')
+                for j, product in enumerate(curr_batch):
+                    print('\n\t', j, product)
+
+            # Retrieve results from futures
+            for future in futures:
+                try:
+                    result = future.result(timeout=timeout)
+                except TimeoutError:
+                    result = 0, f"Timeout happened - GPT couldn't return an answer in {timeout} seconds"
+                results.append(result)
+
         return results
 
 

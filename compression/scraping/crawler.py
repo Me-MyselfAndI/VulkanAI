@@ -33,17 +33,18 @@ class Crawler:
         self.driver.get(url)
         return self.driver.page_source
 
-    def navigate_to_relevant_page(self, search_query, menu_items):
+    def navigate_to_relevant_page(self, search_query, menu_items, threshold=5):
+        print('Navigating in menus')
         all_menu_items = [{'item': item, 'score': self.query_gpt_for_relevance(item.get('text', ''), search_query)} for ancestor in menu_items.values() for item in ancestor.get('items', [])]
         print(f'Total of {len(all_menu_items)} items before purging')
         for item in all_menu_items:
-            if item['score'] <= 3 or not item['item']['href']:
+            if item['score'] < threshold or not item['item']['href']:
                 all_menu_items.remove(item)
                 continue
         print(f'Total of {len(all_menu_items)} items after purging')
 
         all_menu_items.sort(key=lambda x: -x['score'])
-        print(all_menu_items[0], all_menu_items[0].get('item'), all_menu_items[0].get('score'))
+        # print(all_menu_items[0], all_menu_items[0].get('item'), all_menu_items[0].get('score'))
         # Navigate to the menu item that meets the relevance threshold
         for i, tag in enumerate(all_menu_items):
             item, score = tag.get('item'), tag.get('score')
@@ -70,7 +71,9 @@ class Crawler:
 
     def query_gpt_for_relevance(self, menu_text, search_query):
         response = self.gpt_engine.get_response(
-            f"On a scale of 1 to 5, how likely is it that the menu item '{menu_text}' contains what the query '{search_query}' is searching for? Make sure the response only consists of a number between 1 to 5, make any assumptions")
+            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it that "
+            f"the menu item '{menu_text}' contains what the query '{search_query}' is searching for? Make sure the "
+            f"response only consists of a number between 1 to 5, make any assumptions")
 
         print('\t', menu_text, response)
         try:
@@ -96,7 +99,7 @@ class Crawler:
     def check_page_relevance(self, search_query):
         is_relevant = self.gpt_engine.get_response(
             f"Is this page '{self.driver.current_url}' relevant to the query '{search_query}'? Do not type anything, "
-            f"just answer with a number from 1 to 5 with 5 being a spot-on answer and 1 being completely unrelated")
+            f"just answer with a number from 1 to 5 with 5 being a spot-on answer without distractions and 1 being completely unrelated")
         print(is_relevant)
         return is_relevant >= "3"
 

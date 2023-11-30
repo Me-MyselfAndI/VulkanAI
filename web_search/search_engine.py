@@ -49,9 +49,12 @@ class SearchEngine:
             css_url = link.get('href')
             if not bool(urlparse(css_url).netloc):
                 css_url = urljoin(website_url, css_url)
-            css_response = requests.get(css_url)
-            if css_response.status_code == 200:
-                css_content.append(css_response.text)
+            try:
+                css_response = requests.get(css_url)
+                if css_response.status_code == 200:
+                    css_content.append(css_response.text)
+            except Exception as e:
+                print(f'\u001b[33mWarning! Exception happened: \n{e}\u001b[0m')
 
         return {'html': soup.prettify(), 'css': css_content, 'url': website_url}
 
