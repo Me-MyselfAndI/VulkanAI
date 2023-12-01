@@ -39,9 +39,12 @@
 }
 
 * {
-  background-color: #1c1e21;
   color: white;
   margin: auto;
+}
+
+body {
+  background-color: #1c1e21;
 }
 
 h1 {

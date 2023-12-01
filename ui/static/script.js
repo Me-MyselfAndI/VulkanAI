@@ -17,6 +17,11 @@ showLoader = function(e) {
     document.getElementById('loader').style.visibility = 'show';
 }
 
+function hideLoaderDemo() {
+    wait(3000);//Wait a little before rendering page
+    hideLoader();
+}
+
 //Non Production Kostyl
 function wait(ms){
    var start = new Date().getTime();
@@ -29,7 +34,6 @@ function wait(ms){
 //Move user search result page
 function sendToNewPage() {
     console.log("Sending user to new page");
-    wait(13000);//Wait a little before rendering page
     window.location.href = "http://127.0.0.1:8000/views/search-result";
     // Check response is ready or not
     if (xhr.status == 201) {//xhr.readyState == 4 && xhr.status == 201

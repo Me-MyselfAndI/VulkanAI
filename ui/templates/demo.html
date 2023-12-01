@@ -4,9 +4,31 @@
     <meta charset="UTF-8">
     <title>Remove specs in DaVinci</title>
     <link href="../static/templatestyle.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/loader.css">
 </head>
-<body>
+<body onload="hideLoaderDemo()">
     <div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>
+
+    <!--Loading animation-->
+      <div class="loader" id="loader">
+        <div class="loader-inner">
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+          <div class="loader-line-wrap">
+            <div class="loader-line"></div>
+          </div>
+        </div>
+      </div>
 
     <h1>How to remove dust specs in DaVinci ?</h1>
 
@@ -22,6 +44,8 @@
                 <p>By carefully implementing the Dust Buster plugin and adjusting its settings to suit your footage, you can manually remove dirt and dust from your videos while preserving their overall quality. This level of control makes the Dust Buster plugin a valuable addition to your toolkit when dealing with persistent or large imperfections in your footage.</p>
                 <p>When using the Dust Buster plugin in DaVinci Resolve, selecting the appropriate patch type is essential for achieving the desired results. Each patch type offers a unique approach to removing imperfections from your footage. Here, we�ll discuss the six available patch types in detail to help you make an informed decision based on your specific needs:</p>
                 <p>Thank you for reading our article on removing dirt and dust from your footage in DaVinci Resolve. We hope you found these methods helpful and that they enable you to achieve cleaner, more professional-looking videos. By following the step-by-step instructions provided for each method, you should be able to effectively eliminate unwanted particles and imperfections from your footage, regardless of the specific challenges they present.</p>
+                <br>
+                <h2>Links</h2>
                 <span property="itemListElement" typeof="ListItem"><a class="home" href="https://filmmakingelements.com" property="item" title="Go to Filmmaking Elements." typeof="WebPage"><span property="name">Filmmaking Elements</span></a><meta content="1" property="position"/></span> &gt; <span property="itemListElement" typeof="ListItem"><a class="post-root post post-post" href="https://filmmakingelements.com/blog/" property="item" title="Go to Blog." typeof="WebPage"><span property="name">Blog</span></a><meta content="2" property="position"/></span> &gt; <span property="itemListElement" typeof="ListItem"><a class="taxonomy category" href="https://filmmakingelements.com/category/post-production/" property="item" title="Go to the Post Production Category archives." typeof="WebPage"><span property="name">Post Production</span></a><meta content="3" property="position"/></span> &gt; <span property="itemListElement" typeof="ListItem"><span class="post post-post current-item" property="name">3 Methods to Remove Dirt and Dust in DaVinci Resolve</span><meta content="https://filmmakingelements.com/remove-dirt-and-dust-in-davinci-resolve/" property="url"/><meta content="4" property="position"/></span></span>
             </div>
 
@@ -76,5 +100,6 @@
 
 
 <script src='../static/redirect.js'></script>
+<script src='../static/script.js'></script>
 </body>
 </html>
