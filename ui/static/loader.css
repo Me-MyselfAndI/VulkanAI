@@ -1,6 +1,6 @@
 .loader {
     background: #000;
-    background: radial-gradient(#222, rgba(0, 0, 0, .1));
+    background: radial-gradient(#222, rgba(0, 0, 0, 1));
     bottom: 0;
     left: 0;
     overflow: hidden;
@@ -68,35 +68,35 @@
   }
   
   .loader-line-wrap:nth-child(1) .loader-line {
-    border-color: #a200ff;
+    border-color: #FBB321;
     height: 90px;
     width: 90px;
     top: 7px;
   }
   
   .loader-line-wrap:nth-child(2) .loader-line {
-    border-color: #cc00ff;
+    border-color: #fba421;
     height: 76px;
     width: 76px;
     top: 14px;
   }
   
   .loader-line-wrap:nth-child(3) .loader-line {
-    border-color: #cd00cd;
+    border-color: #fb8e21;
     height: 62px;
     width: 62px;
     top: 21px;
   }
   
   .loader-line-wrap:nth-child(4) .loader-line {
-    border-color: #b300b3;
+    border-color: #da5b00;
     height: 48px;
     width: 48px;
     top: 28px;
   }
   
   .loader-line-wrap:nth-child(5) .loader-line {
-    border-color: #9a009a;
+    border-color: #b64c00;
     height: 34px;
     width: 34px;
     top: 35px;

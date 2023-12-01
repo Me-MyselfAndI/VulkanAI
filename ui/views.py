@@ -87,14 +87,14 @@ def search_result():
 
         #Transfer template to final result file and start transfering important data into the template
         template = ""
-        with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
+        """with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
             template = template_file.read()
         with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
             result_file.write(template)
             print(content)
             for line in (line.strip("\n") for line in content):
                if "h2" in line:
-                   print(line)
+                   print(line)"""
 
 
         #Send success message so we can start transfering user to new page
@@ -106,7 +106,7 @@ def search_result():
         flask.Response(response=json.dumps(return_data), status=201)
 
 
-    return render_template("final_result.html")
+    return render_template("demo.html")
     #Extra Code
     """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
