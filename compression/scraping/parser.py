@@ -211,6 +211,16 @@ class Parser:
                      'descendant-depth': N}
                 )
 
+        # Remove in-page scroll references (hashtags)
+        for ancestor in menu_items.copy():
+            for i in range(len(menu_items[ancestor]['items']) - 1, -1, -1):
+                href = menu_items[ancestor]['items'][i]['href']
+                if href is None or re.match(r'^#', href):
+                    menu_items[ancestor]['items'].pop(i)
+            if len(menu_items[ancestor]['items']) == 0:
+                menu_items.pop(ancestor)
+
+        # Remove same items
         for i, ancestor_i in enumerate(menu_items.copy()):
             for j, ancestor_j in enumerate(menu_items.copy()):
                 if i >= j or ancestor_i not in menu_items.keys() or ancestor_j not in menu_items.keys():
@@ -220,6 +230,8 @@ class Parser:
                         set(map(lambda item: (item['href'], item['onclick']), elements1))) == set()):
                     menu_items.pop(ancestor_j)
 
+        # Find elements that are the only ones in their sub-menu
+        # Needed to later perform deep sibling join
         non_sibling_elements = []
         for ancestor in menu_items.copy():
             elements = menu_items[ancestor]['items']
@@ -227,6 +239,7 @@ class Parser:
                 non_sibling_elements.append(elements[0])
                 continue
 
+        # Deep sibling join
         for i, el_i in enumerate(non_sibling_elements):
             for j, el_j in enumerate(non_sibling_elements[:i]):
                 common_parent = _find_common_ancestral_path(el_i['tag'], el_j['tag'], min_common_depth,
@@ -239,6 +252,8 @@ class Parser:
                     if el_j not in menu_items[common_parent]['items']:
                         menu_items[common_parent]['items'].append(el_j)
 
+        # Remove ancestors that still have 0 or 1 children
+        # Remove Same ancestors
         for ancestor in menu_items.copy():
             elements = menu_items[ancestor]['items']
             if len(elements) <= 1:
@@ -258,6 +273,7 @@ class Parser:
                     menu_items.pop(ancestor)
                     break
 
+        # Compute score and remove properties that are irrelevant outside of the method
         for ancestor in menu_items.copy():
             menu_items[ancestor]['score'] = sum([item['score'] for item in elements]) / len(elements)
             for i in range(len(menu_items[ancestor]['items'])):
