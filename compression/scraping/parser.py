@@ -213,7 +213,8 @@ class Parser:
 
         for i, ancestor_i in enumerate(menu_items.copy()):
             for j, ancestor_j in enumerate(menu_items.copy()):
-                if i >= j or ancestor_i not in menu_items.keys() or ancestor_j not in menu_items.keys(): continue
+                if i >= j or ancestor_i not in menu_items.keys() or ancestor_j not in menu_items.keys():
+                    continue
                 elements0, elements1 = menu_items[ancestor_i]['items'], menu_items[ancestor_j]['items']
                 if (set(map(lambda item: (item['href'], item['onclick']), elements0)).difference(
                         set(map(lambda item: (item['href'], item['onclick']), elements1))) == set()):

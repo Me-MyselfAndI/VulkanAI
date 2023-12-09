@@ -33,22 +33,6 @@ class GPTEngine:
         )
 
         return result.choices[0].message.content
-
-    # def get_responses_async(self, prompt: str, args=(), batches=5):
-    #     pool = Pool()
-    #     results = []
-    #     for i in range(math.ceil(len(args) / batches)):
-    #         curr_batch = args[i: i + batches + 1]
-    #         requests = [prompt.format(product) for product in curr_batch]
-    #         results.extend(
-    #             pool.imap(self.get_response, requests)
-    #         )
-    #         sleep(0.02)  # Required to wait to avoid maxing out our server capacity
-    #         print(f'\u001b[32mBatch {i}:\u001b[0m')
-    #         for j in range(batches):
-    #             print('\n\t', j, curr_batch[j])
-    #     return results
-
     def get_responses_async(self, prompt: str, args=(), batches=10, timeout=5):
         results = []
 
