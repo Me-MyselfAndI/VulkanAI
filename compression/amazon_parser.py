@@ -75,10 +75,10 @@ def generate_website(product_info):
     </html>
     """
 
-    with open("amazon_products.html", "w") as file:
+    with open("test_input.html", "w") as file:
         file.write(html_content)
 
-    print("Website generated: amazon_products.html")
+    print("Website generated: test_input.html")
 
 
 def get_product_info(soup, base_url):

@@ -137,9 +137,28 @@ class Parser:
 
     def find_website_menu(self, base_url, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
                           max_link_search_depth=5):
+
         if self.soup is None:
             print("\u001b[31mERROR: PARSER UNINITIALIZED")
             assert False
+
+        def remove_same_ancestors(menu_items):
+            ancestor_cleaning_dict = {}
+            for i, (ancestor, elements) in enumerate(menu_items.copy().items()):
+                indices = set((item['href'], item['onclick']) for item in elements['items'])
+
+                curr_is_superset = any(key.issubset(indices) for key in ancestor_cleaning_dict)
+                if curr_is_superset:
+                    menu_items.pop(ancestor)
+                else:
+                    ancestor_cleaning_dict[frozenset(indices)] = ancestor
+                for j, key in enumerate(ancestor_cleaning_dict):
+                    if key == indices:
+                        continue
+                    if indices.issubset(key):
+                        popped = menu_items.pop(ancestor_cleaning_dict.get(key, None), None)
+                        if popped is None:
+                            print('\u001b[33mWarning: Intersecting menu items possibly detected!\u001b[0m')
 
         def calculate_likelihood_score(element):
             likelihood_score = 0
@@ -220,18 +239,12 @@ class Parser:
             if len(menu_items[ancestor]['items']) == 0:
                 menu_items.pop(ancestor)
 
+        print()
         # Remove same items
-        for i, ancestor_i in enumerate(menu_items.copy()):
-            for j, ancestor_j in enumerate(menu_items.copy()):
-                if i >= j or ancestor_i not in menu_items.keys() or ancestor_j not in menu_items.keys():
-                    continue
-                elements0, elements1 = menu_items[ancestor_i]['items'], menu_items[ancestor_j]['items']
-                if (set(map(lambda item: (item['href'], item['onclick']), elements0)).difference(
-                        set(map(lambda item: (item['href'], item['onclick']), elements1))) == set()):
-                    menu_items.pop(ancestor_j)
+        remove_same_ancestors(menu_items)
 
         # Find elements that are the only ones in their sub-menu
-        # Needed to later perform deep sibling join
+        # Needed to perform deep sibling join in later parts of parsing
         non_sibling_elements = []
         for ancestor in menu_items.copy():
             elements = menu_items[ancestor]['items']
@@ -252,29 +265,13 @@ class Parser:
                     if el_j not in menu_items[common_parent]['items']:
                         menu_items[common_parent]['items'].append(el_j)
 
-        # Remove ancestors that still have 0 or 1 children
-        # Remove Same ancestors
+        # Remove same ancestors
+        # It needs to be done again due to the joined deep siblings
+        remove_same_ancestors(menu_items)
+
+        # Compute score and remove properties that are irrelevant outside the method
         for ancestor in menu_items.copy():
             elements = menu_items[ancestor]['items']
-            if len(elements) <= 1:
-                menu_items.pop(ancestor)
-                continue
-            for ancestor_1 in menu_items.copy():
-                if ancestor_1 == ancestor:
-                    continue
-                elements_1 = menu_items[ancestor_1]['items']
-                if set(
-                        map(lambda item: (item['href'], item['onclick']), elements)
-                ).difference(
-                    set(
-                        map(lambda item: (item['href'], item['onclick']), elements_1)
-                    )
-                ) == set():
-                    menu_items.pop(ancestor)
-                    break
-
-        # Compute score and remove properties that are irrelevant outside of the method
-        for ancestor in menu_items.copy():
             menu_items[ancestor]['score'] = sum([item['score'] for item in elements]) / len(elements)
             for i in range(len(menu_items[ancestor]['items'])):
                 href = menu_items[ancestor]['items'][i]['href']
@@ -288,7 +285,6 @@ class Parser:
 
     def find_text_content(self, filter_threshold=0.15):
         # Find all <p>, <h>, <table>, <a>, <span>, IN SOME SITUATIONS <div>, <ul>, <ol>
-
         discovered_tags = []
 
         for likelihood_const in self.text_tag_types.keys():

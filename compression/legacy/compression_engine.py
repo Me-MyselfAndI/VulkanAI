@@ -24,7 +24,7 @@ class CompressionEngine:
         driver.quit()
         return products
 
-    def generate_container_html(self, url, output_file="amazon_products.html"):
+    def generate_container_html(self, url, output_file="test_input.html"):
         html_content = """
             <!DOCTYPE html>
             <html lang="en">
