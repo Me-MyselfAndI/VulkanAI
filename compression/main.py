@@ -169,7 +169,7 @@ class ScrapingController:
         for i, element in enumerate(parsed_content):
             request = (f"On a scale of 1 to 5, how likely is it that the menu item \"{element['text']}\" contains "
                        f"what the query '{search_query}' is searching for? Make sure the response only consists of a "
-                       f"number between 1 to 5, make any assumptions")
+                       f"number between 1 to 5, NOTHING else")
             response = self._gpt.get_response(request)
             print(i, element['text'], response)
             if not '1' <= response <= '5' or len(response) > 1:
@@ -204,7 +204,7 @@ class ScrapingController:
             menu_items = parser.find_website_menu(website['url'])
 
             crawler = Crawler(website['url'], self._gpt)
-            crawled_page_html = crawler.navigate_to_relevant_page(search_query, menu_items)
+            crawled_page_html = crawler.navigate_to_relevant_page(search_query, menu_items, lang=website.get('lang', 'english'))
 
             if crawled_page_html is None:
                 crawled_page_html = website['html']
@@ -220,14 +220,15 @@ class ScrapingController:
 
 def main():
     scraping_controller = ScrapingController()
-    with open('compression/amazon_products.html', encoding='utf-8') as file:
+    with open('compression/test_input.html', encoding='utf-8') as file:
         products_html = file.read()
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://www.amazon.com/Watches-50-100-Men/s?rh=n%3A6358539011%2Cp_36%3A2661614011',
-            'html': products_html
+            'url': 'https://www.coolmathgames.com/blog/how-to-play-snake-mastering-a-classic',
+            'html': products_html,
+            'lang': 'english'
         },
-        'Buy watches under 150 on amazon men black watch'
+        'Snake game - how to play it in depth and what is it'
     ))
 
 

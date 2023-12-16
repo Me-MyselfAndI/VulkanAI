@@ -50,7 +50,7 @@ class GPTEngine:
                 sleep(0.02)  # Required to wait to avoid overloading the server
                 print(f'\u001b[32mBatch {i}:\u001b[0m')
                 for j, product in enumerate(curr_batch):
-                    print('\n\t', j, product)
+                    print('\n\t', product)
 
             # Retrieve results from futures
             for future in futures:
