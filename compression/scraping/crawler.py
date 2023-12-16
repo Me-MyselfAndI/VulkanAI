@@ -33,25 +33,25 @@ class Crawler:
         self.driver.get(url)
         return self.driver.page_source
 
-    def navigate_to_relevant_page(self, search_query, menu_items, threshold=5):
+    def navigate_to_relevant_page(self, search_query, menu_items, threshold=5, lang='english'):
         print('Navigating in menus')
         menu_items_flattened = [
             {'item': item, 'text': item.get('text', '')} for ancestor in menu_items.values()
             for item in ancestor.get('items', [])
         ]
-        gpt_evaluations = self.query_gpt_for_relevance_async(menu_items_flattened, search_query)
+        gpt_evaluations = self.query_gpt_for_relevance_async(menu_items_flattened, search_query, lang=lang)
         for i, eval in enumerate(gpt_evaluations):
             menu_items_flattened[i]['score'] = eval
 
         print(f'Total of {len(menu_items_flattened)} items before purging')
-        for item in menu_items_flattened:
-            if item['score'] < threshold or not item['item']['href']:
-                menu_items_flattened.remove(item)
-                continue
+        menu_items_flattened = [
+            item for item in menu_items_flattened
+            if item['score'] >= threshold and item['item']['href']
+        ]
+
         print(f'Total of {len(menu_items_flattened)} items after purging')
 
         menu_items_flattened.sort(key=lambda x: -x['score'])
-        # print(all_menu_items[0], all_menu_items[0].get('item'), all_menu_items[0].get('score'))
         # Navigate to the menu item that meets the relevance threshold
         for i, tag in enumerate(menu_items_flattened):
             item, score = tag.get('item'), tag.get('score')
@@ -72,27 +72,14 @@ class Crawler:
         print('\u001b[31mReturned None - staying on the same page\u001b[0m')
         return None
 
-    def query_gpt_for_relevance(self, menu_text, search_query):
-        response = self.gpt_engine.get_response(
-            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it that "
-            f"the menu item '{menu_text}' contains what the query '{search_query}' is searching for? Make sure the "
-            f"response only consists of a number between 1 to 5")
-
-        print('\t', menu_text, response)
-        try:
-            response = int(response)
-        except Exception:
-            return 0
-
-        return response
-
-    def query_gpt_for_relevance_async(self, menu_items, search_query):
+    def query_gpt_for_relevance_async(self, menu_items, search_query, lang):
         responses = self.gpt_engine.get_responses_async(
             '{}', [
                 f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
                 f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
                 f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
-                f"Make sure the response only consists of a number between 1 to 5, make any assumptions"
+                f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
+                f"consists of a number between 1 to 5, NOTHING else"
                 for menu_item in menu_items
             ]
         )
