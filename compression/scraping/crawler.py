@@ -44,10 +44,11 @@ class Crawler:
             menu_items_flattened[i]['score'] = eval
 
         print(f'Total of {len(menu_items_flattened)} items before purging')
-        for item in menu_items_flattened:
-            if item['score'] < threshold or not item['item']['href']:
-                menu_items_flattened.remove(item)
-                continue
+        menu_items_flattened = [
+            item for item in menu_items_flattened
+            if item['score'] >= threshold and item['item']['href']
+        ]
+
         print(f'Total of {len(menu_items_flattened)} items after purging')
 
         menu_items_flattened.sort(key=lambda x: -x['score'])
@@ -77,8 +78,8 @@ class Crawler:
                 f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
                 f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
                 f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
-                f"Make sure the response only consists of a number between 1 to 5, make any assumptions. Language other "
-                f"than \"{lang}\" automatically reduces the score to 1"
+                f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
+                f"consists of a number between 1 to 5, NOTHING else"
                 for menu_item in menu_items
             ]
         )
