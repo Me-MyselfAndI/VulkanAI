@@ -22,8 +22,7 @@ from compression.ai.gpt_engine import GPTEngine
 
 
 class Crawler:
-    def __init__(self, base_url, gpt_engine):
-        self.base_url = base_url
+    def __init__(self, gpt_engine):
         self.gpt_engine = gpt_engine
         options = Options()
         options.add_argument('--headless=new')
@@ -33,13 +32,26 @@ class Crawler:
         self.driver.get(url)
         return self.driver.page_source
 
-    def navigate_to_relevant_page(self, search_query, menu_items, threshold=5, lang='english'):
+    def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15, max_recursion_depth=2, lang='english'):
+        parser = Parser(website['url'], html=website['html'])
+        compressed_original_page_tags = parser.find_text_content()
+        page_content_relevance = self.query_gpt_for_text_relevance(compressed_original_page_tags, search_query)
+        curr_page_relevance_rate = len([1 for item in page_content_relevance if item >= threshold]) / len(page_content_relevance)
+        if max_recursion_depth == 0 or curr_page_relevance_rate >= min_relevance_rate:
+            return {
+                'relevance': curr_page_relevance_rate,
+                'url': website['url'],
+                'html': website['html']
+            }
+
+        menu_items = parser.find_website_menu()
+
         print('Navigating in menus')
         menu_items_flattened = [
             {'item': item, 'text': item.get('text', '')} for ancestor in menu_items.values()
             for item in ancestor.get('items', [])
         ]
-        gpt_evaluations = self.query_gpt_for_relevance_async(menu_items_flattened, search_query, lang=lang)
+        gpt_evaluations = self.query_gpt_menus_for_relevance(menu_items_flattened, search_query, lang=lang)
         for i, eval in enumerate(gpt_evaluations):
             menu_items_flattened[i]['score'] = eval
 
@@ -64,23 +76,63 @@ class Crawler:
             try:
                 self.driver.get(link)
                 self.handle_dropdowns(search_query)
-                if self.check_page_relevance(search_query):
-                    return self.driver.page_source
+                new_website = {
+                    'url': link,
+                    'html': self.driver.page_source
+                }
+                result = self.navigate_to_relevant_page(
+                    search_query, new_website,
+                    max_recursion_depth=max_recursion_depth-1,
+                    threshold=threshold,
+                    min_relevance_rate=min_relevance_rate, lang=lang
+                )
+
+                if result['relevance'] > curr_page_relevance_rate:
+                    return result
+                else:
+                    return {
+                        'relevance': curr_page_relevance_rate,
+                        'url': website['url'],
+                        'html': website['html']
+                    }
+
             except Exception as e:
                 print(f"\u001b[31mError processing {link}: {e}\u001b[0m")
 
         print('\u001b[31mReturned None - staying on the same page\u001b[0m')
-        return None
+        return {
+            'relevance': curr_page_relevance_rate,
+            'url': website['url'],
+            'html': website['html']
+        }
 
-    def query_gpt_for_relevance_async(self, menu_items, search_query, lang):
+    def query_gpt_menus_for_relevance(self, menu_items, search_query, lang):
         responses = self.gpt_engine.get_responses_async(
             '{}', [
                 f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
                 f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
                 f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
                 f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
-                f"consists of a number between 1 to 5, NOTHING else"
+                f"consists of a number from 1 to 5, NOTHING else"
                 for menu_item in menu_items
+            ]
+        )
+        for i, response in enumerate(responses):
+            try:
+                responses[i] = int(response)
+            except Exception:
+                responses[i] = 0
+                print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
+
+        return responses
+
+    def query_gpt_for_text_relevance(self, text_items, search_query):
+        responses = self.gpt_engine.get_responses_async(
+            '{}', [
+                f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how relevant is "
+                f"the menu item \"{text_item['text']}\" to the query \"{search_query}\"? "
+                f"Your response must only consist of a number from 1 to 5, NOTHING else at all"
+                for text_item in text_items
             ]
         )
         for i, response in enumerate(responses):
@@ -104,18 +156,3 @@ class Crawler:
                     option.click()
                     break
             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*')))
-
-    def check_page_relevance(self, search_query):
-        is_relevant = self.gpt_engine.get_response(
-            f"Is this page '{self.driver.current_url}' relevant to the query '{search_query}'? Do not type anything, "
-            f"just answer with a number from 1 to 5 with 5 being a spot-on answer without distractions and 1 being "
-            f"completely unrelated")
-        print(is_relevant)
-        return is_relevant >= "3"
-
-
-if __name__ == "__main__":
-    base_url = "https://www.anichart.net"
-    crawler = Crawler(base_url, gpt_engine=GPTEngine())
-    relevant_page_html = crawler.navigate_to_relevant_page("I want a horror isekai anime")
-    print(relevant_page_html)
