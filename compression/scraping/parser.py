@@ -55,7 +55,8 @@ class Parser:
         1.0: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'a', 'span', 'button', 'code'],
         0.7: ['ul', 'ol']
     }
-    def __init__(self, html=None, soup=None):
+    def __init__(self, url, html=None, soup=None):
+        self.url = url
         if html is not None:
             self.soup = BeautifulSoup(html, 'html.parser')
             # self.soup = BeautifulSoup(html, 'lxml')
@@ -135,9 +136,7 @@ class Parser:
         print("Number of products: ", len(products))
         return products
 
-    def find_website_menu(self, base_url, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
-                          max_link_search_depth=5):
-
+    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7, max_link_search_depth=5):
         if self.soup is None:
             print("\u001b[31mERROR: PARSER UNINITIALIZED")
             assert False
@@ -276,7 +275,7 @@ class Parser:
             for i in range(len(menu_items[ancestor]['items'])):
                 href = menu_items[ancestor]['items'][i]['href']
                 if href is not None and not re.match(r'^\w+:?//', href):
-                    menu_items[ancestor]['items'][i]['href'] = urljoin(base_url, href)
+                    menu_items[ancestor]['items'][i]['href'] = urljoin(self.url, href)
                 menu_items[ancestor]['items'][i].pop('tag')
                 menu_items[ancestor]['items'][i].pop('score')
                 menu_items[ancestor]['items'][i].pop('descendant-depth')

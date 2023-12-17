@@ -189,28 +189,24 @@ class ScrapingController:
                         """
         return html_content
 
-    def get_parsed_website_html(self, website, search_query):
-        parser = Parser(html=website['html'])
+    def get_parsed_website_html(self, website, search_query, threshold=4):
 
         marketplace_likelihood = self._gpt.get_response(
             f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
             f'likelihood from 1 to 5, and output nothing other than the number')
+
         if marketplace_likelihood >= '4':
+            parser = Parser(website['url'], html=website['html'])
             product_groups = parser.find_container_groups(website['url'])
             filtered_products = self._filter_marketplace_products(product_groups, search_query)
             return self._generate_container_html(filtered_products)
 
         else:
-            menu_items = parser.find_website_menu(website['url'])
+            crawler = Crawler(self._gpt)
+            crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold, lang=website.get('lang', 'english'))
 
-            crawler = Crawler(website['url'], self._gpt)
-            crawled_page_html = crawler.navigate_to_relevant_page(search_query, menu_items, lang=website.get('lang', 'english'))
-
-            if crawled_page_html is None:
-                crawled_page_html = website['html']
-
-            print('crawled page:', crawled_page_html)
-            crawled_page_parser = Parser(html=crawled_page_html)
+            print('crawled page URL:', crawled_page['url'])
+            crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'])
             parsed_content = crawled_page_parser.find_text_content()
 
             threshold = 3
@@ -224,11 +220,11 @@ def main():
         products_html = file.read()
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://www.coolmathgames.com/blog/how-to-play-snake-mastering-a-classic',
+            'url': 'https://en.wikipedia.org/wiki/Smartphone',
             'html': products_html,
             'lang': 'english'
         },
-        'Snake game - how to play it in depth and what is it'
+        'iPhone history'
     ))
 
 
