@@ -36,32 +36,33 @@ class ScrapingController:
         for i, product in enumerate(nonempty_description_products):
             print(i, product)
 
-        astica_descriptions = []
-        for i, (product, (astica_response_code, astica_result)) in enumerate(
-            zip(
-                nonempty_description_products,
-                self._astica.get_image_descriptions_async(list(map(lambda x: x['img'], nonempty_description_products)))
-            )
-        ):
-            try:
-                if astica_response_code != 200:
-                    print(f'\u001b[31mAstica returned code {astica_response_code} on this product; error message: {astica_result}\n skipping\u001b[0m')
-                    astica_descriptions.append(f'NO IMAGE-BASED DESCRIPTION: {astica_result}')
-                else:
-                    astica_descriptions.append(astica_result)
-            except Exception as e:
-                print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
-                astica_descriptions.append(
-                    f'NO IMAGE-BASED DESCRIPTION')
+        # astica_descriptions = []
+        # for i, (product, (astica_response_code, astica_result)) in enumerate(
+        #     zip(
+        #         nonempty_description_products,
+        #         self._astica.get_image_descriptions_async(list(map(lambda x: x['img'], nonempty_description_products)))
+        #     )
+        # ):
+        #     try:
+        #         if astica_response_code != 200:
+        #             print(f'\u001b[31mAstica returned code {astica_response_code} on this product; error message: {astica_result}\n skipping\u001b[0m')
+        #             astica_descriptions.append(f'NO IMAGE-BASED DESCRIPTION: {astica_result}')
+        #         else:
+        #             astica_descriptions.append(astica_result)
+        #     except Exception as e:
+        #         print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
+        #         astica_descriptions.append(
+        #             f'NO IMAGE-BASED DESCRIPTION')
 
-        args = []
-        for product, astica_description in zip(nonempty_description_products, astica_descriptions):
+        args, image_urls = [], []
+        for product in nonempty_description_products:
             prompt = (f"Given the user's preference of '{search_query}', how well does the product "
-                      f"with data '{product['text']}' and described as '{astica_description}' match the "
-                      f"criteria? Answer from 1 to 5 where 5 is the exact match and 1 is completely irrelevant. "
-                      f"You are only allowed to give the number, nothing else")
+                      f"with data '{product['text']}' with this image match the "
+                      f"criteria? Answer from 1 (not relevant at all) to 5 (great match). "
+                      f"Only return the number, nothing else")
             args.append(prompt)
-        gpt_responses = self._gpt.get_responses_async('{}', args=args)
+            image_urls.append([product['img']])
+        gpt_responses = self._gpt.get_responses_async('{}', args=args, image_urls=image_urls)
 
         for i, (product, gpt_response) in enumerate(zip(nonempty_description_products, gpt_responses)):
             try:
@@ -113,8 +114,7 @@ class ScrapingController:
 
         product_titles = self._gpt.get_responses_async(
             "A product in a marketplace has properties: {}. Some of it is the title. Find it, "
-            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products]
-        )
+            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products])
         for product, product_title in zip(products, product_titles):
             product_block = f"""
                 <div class="product">
@@ -220,11 +220,11 @@ def main():
         products_html = file.read()
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://en.wikipedia.org/wiki/Smartphone',
+            'url': 'https://www.amazon.com/s?k=bike+tires&crid=VO1Z0N6VACIT&sprefix=bike+tires%2Caps%2C107&ref=nb_sb_noss_1',
             'html': products_html,
             'lang': 'english'
         },
-        'Brief iPhone history'
+        'Tires for a road bike'
     ))
 
 

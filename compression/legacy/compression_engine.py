@@ -59,8 +59,7 @@ class CompressionEngine:
         products = self._get_marketplace_product_info(url)
         product_titles = self.gpt_engine.get_responses_async(
             "A product in a marketplace has properties: {}. Some of it is the title. Find it, "
-            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products]
-        )
+            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products])
         for product, product_tile in zip(products, product_titles):
             product_block = f"""
                 <div class="product">

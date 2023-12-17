@@ -107,16 +107,14 @@ class Crawler:
         }
 
     def query_gpt_menus_for_relevance(self, menu_items, search_query, lang):
-        responses = self.gpt_engine.get_responses_async(
-            '{}', [
-                f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
-                f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
-                f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
-                f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
-                f"consists of a number from 1 to 5, NOTHING else"
-                for menu_item in menu_items
-            ]
-        )
+        responses = self.gpt_engine.get_responses_async('{}', [
+            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
+            f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
+            f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
+            f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
+            f"consists of a number from 1 to 5, NOTHING else"
+            for menu_item in menu_items
+        ])
         for i, response in enumerate(responses):
             try:
                 responses[i] = int(response)
@@ -127,14 +125,12 @@ class Crawler:
         return responses
 
     def query_gpt_for_text_relevance(self, text_items, search_query):
-        responses = self.gpt_engine.get_responses_async(
-            '{}', [
-                f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how relevant is "
-                f"the menu item \"{text_item['text']}\" to the query \"{search_query}\"? "
-                f"Your response must only consist of a number from 1 to 5, NOTHING else at all"
-                for text_item in text_items
-            ]
-        )
+        responses = self.gpt_engine.get_responses_async('{}', [
+            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how relevant is "
+            f"the menu item \"{text_item['text']}\" to the query \"{search_query}\"? "
+            f"Your response must only consist of a number from 1 to 5, NOTHING else at all"
+            for text_item in text_items
+        ])
         for i, response in enumerate(responses):
             try:
                 responses[i] = int(response)

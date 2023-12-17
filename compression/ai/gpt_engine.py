@@ -1,4 +1,5 @@
 import math
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
@@ -19,38 +20,82 @@ class GPTEngine:
                 api_key = keys['api-url']
                 org_url = keys['org-url']
 
-        self.model = 'gpt-4-1106-preview'
+        self.text_model = 'gpt-4-1106-preview'
+        self.vision_model = 'gpt-4-vision-preview'
         self.client = openai.OpenAI(api_key=api_key, organization=org_url)
 
-    def get_response(self, prompt: str):
-        result = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{
-                "role": "user",
-                "content": prompt
-            }]
-        )
+    def get_response(self, prompt: str, image_urls=None):
+        if image_urls is None or not image_urls:
+            model = self.text_model
+            image_requests = []
+        else:
+            model = self.vision_model
+            image_requests = [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": url,
+                        "detail": "low"
+                    }
+                }
+                for url in image_urls
+            ]
+        text_request = [{
+            "type": "text",
+            "text": prompt
+        }]
 
-        return result.choices[0].message.content
+        full_request = [
+                {
+                    "role": "user",
+                    "content": text_request + image_requests
+                }
+            ]
 
-    def get_responses_async(self, prompt: str, args=(), batches=10, timeout=5):
+        try:
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=full_request
+            )
+        except openai.BadRequestError as error:
+            print(f'\u001b[31mError:  {error}\n\tRequest:  {full_request}\u001b[0m')
+            if error.code != 'content_policy_violation':
+                raise Exception(error)
+            return "1"
+
+        return response.choices[0].message.content
+
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=5):
         results = []
+        if image_urls and (len(args) in (0, len(image_urls))):
+            use_images = True
+        else:
+            use_images = False
+            if image_urls:
+                print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping images!")
 
         with ThreadPoolExecutor() as executor:
             futures = []
             for i in range(math.ceil(len(args) / batches)):
                 curr_batch = args[i * batches: (i + 1) * batches]
-                requests = [prompt.format(product) for product in curr_batch]
-
-                # Submit each request to the ThreadPoolExecutor
-                futures.extend(
-                    executor.submit(self.get_response, request) for request in requests
-                )
+                batch_requests = [prompt.format(product) for product in curr_batch]
+                if use_images:
+                    batch_images = image_urls[i * batches: (i + 1) * batches]
+                    # Submit each request to the ThreadPoolExecutor
+                    futures.extend(
+                        executor.submit(self.get_response, request, image) for request, image in zip(batch_requests, batch_images)
+                    )
+                else:
+                    futures.extend(
+                        executor.submit(self.get_response, request) for request in batch_requests
+                    )
 
                 sleep(0.02)  # Required to wait to avoid overloading the server
                 print(f'\u001b[32mBatch {i}:\u001b[0m')
                 for j, product in enumerate(curr_batch):
-                    print('\n\t', product)
+                    print('\n\tPrompt', product)
+                    if use_images:
+                        print('\tImages', batch_images[j])
 
             # Retrieve results from futures
             for future in futures:
