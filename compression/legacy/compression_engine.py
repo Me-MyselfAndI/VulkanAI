@@ -83,14 +83,3 @@ class CompressionEngine:
             print("Saved")
 
         return html_content
-
-
-def main():
-    compression_engine = CompressionEngine()
-    compression_engine.generate_marketplace_html(
-        url='https://www.amazon.com/s?k=white+watch&crid=GVER7X5ZPBD&sprefix=white+watch%2Caps%2C234&ref=nb_sb_noss_1'
-    )
-
-
-if __name__ == '__main__':
-    main()

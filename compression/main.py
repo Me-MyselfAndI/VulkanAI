@@ -224,7 +224,7 @@ def main():
             'html': products_html,
             'lang': 'english'
         },
-        'iPhone history'
+        'Brief iPhone history'
     ))
 
 
