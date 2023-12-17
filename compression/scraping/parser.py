@@ -95,7 +95,6 @@ class Parser:
         for i in range(len(products)):
             for j in range(i):
                 if products[i]['parent'] == products[j]['parent'] or products[i]['parent'] in products[j]['parent'].descendants and products[i]['text'] == products[j]['text'] or products[i]['href'] == products[j]['href']:
-                    # print(products[i]['parent'], products[j]['parent'])
                     products_to_delete.add(j)
                 elif products[j]['parent'] in products[i]['parent'].descendants:
                     products_to_delete.add(i)
@@ -112,7 +111,6 @@ class Parser:
                 curr_parent = curr_parent.parent
             while True:
                 if curr_parent is None:
-                    # print('\t\u001b[31m', product, '\u001b[0m')
                     products_to_delete.add(i)
                     break
                 text_tags = curr_parent.find_all(text=True)
