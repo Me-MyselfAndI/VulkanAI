@@ -63,20 +63,6 @@ class AsticaEngine:
                     results.append(result)
 
         return results
-    #
-    # def get_image_descriptions_async(self, images, batches=5):
-    #     pool = Pool()
-    #     results = []
-    #     for i in range(math.ceil(len(images) / batches)):
-    #         curr_batch = images[i: i + batches + 1]
-    #         results.extend(
-    #             pool.imap(self.get_image_description, images)
-    #         )
-    #         sleep(0.02)  # Required to wait to avoid maxing out our server capacity
-    #         print(f'\u001b[32mAstica: batch {i}:\u001b[0m')
-    #         for j in range(batches):
-    #             print('\n\t', j, curr_batch[j])
-    #     return results
 
 def main():
     api_key = input("Enter Astica API key:\n")

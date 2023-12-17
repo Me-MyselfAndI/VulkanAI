@@ -1,5 +1,6 @@
 from urllib.parse import urlparse, urljoin
 
+import yaml
 from bs4 import BeautifulSoup
 # from serpapi import GoogleSearch as _RunSearch
 from serpapi import DuckDuckGoSearch as _RunSearch
@@ -9,8 +10,8 @@ import requests
 class SearchEngine:
     def __init__(self):
         self.last_search = {"res": [], "prompt": ""}
-        with open("keys/serp_api_key.txt") as file:
-            self.key = file.read()
+        with open(r'keys\keys.yaml') as keys_file:
+            self.key = yaml.load(keys_file, yaml.FullLoader)['keys']['web-search']['serp-api']
 
     def update_links(self, prompt, start_entry=0, search_website=None):
         if search_website is not None:
