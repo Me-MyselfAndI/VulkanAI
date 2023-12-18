@@ -51,11 +51,11 @@ def search_result():
              'url': website_url,
              'html': page["html"]
         }
-
+        print(scraping_controller.get_parsed_website_html(website, formattedSearch))
         #Save HTML ---------------------------------------------------------------
-        #with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-        #    file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
-        #    print("Saved")
+        with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+            file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
+            print("Saved")
 
         #Add Overlay button which allows users to go back on page
         #Might not be neccessary right now cause we putting all of the results in template
@@ -65,6 +65,7 @@ def search_result():
         bodyTag = '<body>'
         endBodyTag = '</body>'
         backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
+        loaderHtml = "<div class='loader' id='loader'><div class='loader-inner'><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div></div></div>"
         content = ""
         with open("ui/templates/result.html", "r", encoding="utf-8") as html_file:#Get current content of the html file to change it
             content = html_file.read()
@@ -83,6 +84,8 @@ def search_result():
             if endBodyTag in content:
                 pos = content.index(endBodyTag)
                 content = content[:pos] + scriptLink + content[pos:]
+            #Add loader
+
             result_file.write(content)
 
         #Transfer template to final result file and start transfering important data into the template
@@ -106,7 +109,7 @@ def search_result():
         flask.Response(response=json.dumps(return_data), status=201)
 
 
-    return render_template("demo.html")
+    return render_template("result.html")
     #Extra Code
     """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
