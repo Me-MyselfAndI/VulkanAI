@@ -59,7 +59,7 @@ class GPTEngine:
             )
         except openai.BadRequestError as error:
             print(f'\u001b[33mWarning Raised by GPT:  {error}\n\tRequest:  {full_request}\u001b[0m')
-            if error.code != 'content_policy_violation':
+            if error.code not in ['content_policy_violation', 'invalid_image_format']:
                 raise Exception(error)
             return "1"
 
