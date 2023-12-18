@@ -58,7 +58,7 @@ class GPTEngine:
                 messages=full_request
             )
         except openai.BadRequestError as error:
-            print(f'\u001b[31mError:  {error}\n\tRequest:  {full_request}\u001b[0m')
+            print(f'\u001b[33mWarning Raised by GPT:  {error}\n\tRequest:  {full_request}\u001b[0m')
             if error.code != 'content_policy_violation':
                 raise Exception(error)
             return "1"
