@@ -17,6 +17,8 @@ with open(r'keys\keys.yaml') as keys_file:
 
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
+#Clean results file
+result_file = open("ui/templates/result.html", 'w')
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
@@ -26,6 +28,8 @@ def home():
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     formattedSearch = ""
+    result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
+
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     if request.method == "POST":
         received_data = request.get_json()
@@ -65,10 +69,8 @@ def search_result():
         bodyTag = '<body>'
         endBodyTag = '</body>'
         backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
-        loaderHtml = "<div class='loader' id='loader'><div class='loader-inner'><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div><div class='loader-line-wrap'><div class='loader-line'></div></div></div></div>"
-        content = ""
-        with open("ui/templates/result.html", "r", encoding="utf-8") as html_file:#Get current content of the html file to change it
-            content = html_file.read()
+        content = open("ui/templates/result.html", "r", encoding="utf-8").read()#Get current content of the html file to change it
+
         with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
             #Add link to button css file
             if headTag in content:
@@ -84,8 +86,6 @@ def search_result():
             if endBodyTag in content:
                 pos = content.index(endBodyTag)
                 content = content[:pos] + scriptLink + content[pos:]
-            #Add loader
-
             result_file.write(content)
 
         #Transfer template to final result file and start transfering important data into the template
@@ -100,7 +100,7 @@ def search_result():
                    print(line)"""
 
 
-        #Send success message so we can start transfering user to new page
+        #Send success message so we can start reloade page to render new html
         message = received_data['data']
         return_data = {
             "status": "success",
@@ -108,8 +108,12 @@ def search_result():
         }
         flask.Response(response=json.dumps(return_data), status=201)
 
+        result_file = open("ui/templates/result.html", 'r')
 
-    return render_template("result.html")
+    if result_file.read() == "":
+        return render_template("loader.html")
+    else:
+        return render_template("result.html")
     #Extra Code
     """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
