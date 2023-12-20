@@ -36,9 +36,10 @@ function sendToNewPage() {
     console.log("Sending user to new page");
     window.location.href = "http://127.0.0.1:8000/views/search-result";
     // Check response is ready or not
-    if (xhr.status == 201) {//xhr.readyState == 4 && xhr.status == 201
+    if (xhr.readyState == 4 && xhr.status == 201) {
+        console.log("Received data");
+        console.log(xhr.responseText);
 
-        window.location.href = "http://127.0.0.1:8000/views/search-result";
     }
 }
 
@@ -52,11 +53,11 @@ document.getElementById("search-button").addEventListener("click", function(even
     console.log(prefWebsite)
 
     xhr = getXmlHttpRequestObject();
+    xhr.onreadystatechange = sendToNewPage;
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
     xhr.send(JSON.stringify({"data": inputValue, "pref-website": prefWebsite}));
-    xhr.onreadystatechange = sendToNewPage();
 });
 
 //Make search bar grow in height as user keeps typing into it
@@ -106,8 +107,8 @@ $('textarea').on({
     .catch(error => {
         console.error('Error:', error);
     })
-*/
-fetch('/search-result')
+
+/*fetch('/search-result')
   .then(response => {
     return response.text();
   })
@@ -116,4 +117,6 @@ fetch('/search-result')
   })
   .catch(error => {
     console.error('Fetch error:', error);
-  });
+  });*/
+
+

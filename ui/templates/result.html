@@ -1,0 +1,51 @@
+
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+<link href="../static/templatestyle.css" rel="stylesheet">
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>VulkanAI - Filtered Products</title>
+                <style>
+                    .products {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        justify-content: center;
+                    }
+                    .product {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        width: 150px;
+                        text-align: center;
+                    }
+                    .product img {
+                        max-width: 100%;
+                        max-height: 100px;
+                    }
+                </style>
+            </head>
+            <body><div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>
+<input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/>
+            <div class="products">
+            
+                <div class="product">
+                    <a href="https://www.truecar.com/used-cars-for-sale/listing/JHMGD38407S063012/2007-honda-fit/?zipcode=30094" target="_blank">
+                        <img src="https://listings-prod.tcimg.net/listings/86842/12/30/JHMGD38407S063012/6AJEBOLNPOE5FS2UWE2Q57R7LM-cr-60.jpg" alt="['2007', 'Honda', 'Fit', 'Automatic', 'Excellent Price', '$', '170', 'off', 'avg. list price', '$4,988', '154,043', 'miles', 'Upfront Price Available', '37 mi -', 'Conyers', ',', 'GA', 'Red', 'exterior,', 'Unknown', 'interior', '2 accidents reported, 4 Owners', 'VIN', 'JHMGD38407S063012']">
+                        <p>2007 Honda Fit Automatic</p>
+                    </a>
+                </div>
+                
+                <div class="product">
+                    <a href="https://www.truecar.com/used-cars-for-sale/listing/1HGFA15588L116902/2008-honda-civic/?zipcode=32839" target="_blank">
+                        <img src="https://static.tcimg.net/vehicles/primary/16d71112c6196d3a/2008-Honda-Civic-white-full_color-driver_side_front_quarter.png?auto=format&fill=solid&fit=fill&h=202.5&pad=53&w=360" alt="['2008', 'Honda', 'Civic', 'LX Sedan Manual', 'Excellent Price', '$', '229', 'off', 'avg. list price', '$4,900', '146,999', 'miles', '426 mi -', 'Orlando', ',', 'FL', 'Red', 'exterior,', 'Unknown', 'interior', 'No accidents reported, 2 Owners', 'VIN', '1HGFA15588L116902']">
+                        <p>2008 Honda Civic LX Sedan Manual</p>
+                    </a>
+                </div>
+                
+                </div>
+            <script src='../static/redirect.js'></script>
+</body>
+            </html>
+            
