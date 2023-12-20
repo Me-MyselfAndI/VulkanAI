@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 #from compression.compression_engine import CompressionEngine
-import yaml, os, flask, json
+import yaml, os, flask, json, jsonify, requests
 from compression.main import ScrapingController
 
 #Init Classes
@@ -17,8 +17,7 @@ with open(r'keys\keys.yaml') as keys_file:
 
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
-#Clean results file
-result_file = open("ui/templates/result.html", 'w')
+result_file = open("ui/templates/result.html", 'w')#Clean results file
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
@@ -69,6 +68,7 @@ def search_result():
         bodyTag = '<body>'
         endBodyTag = '</body>'
         backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
+        slider = '<input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/>'
         content = open("ui/templates/result.html", "r", encoding="utf-8").read()#Get current content of the html file to change it
 
         with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
@@ -77,11 +77,17 @@ def search_result():
                 addPos = len(headTag)
                 pos = content.index(headTag) + addPos
                 content = content[:pos] + cssLink + content[pos:]
+            # Add slider
+            if bodyTag in content:
+                addPos = len(bodyTag)
+                pos = content.index(bodyTag) + addPos
+                content = content[:pos] + slider + content[pos:]
             # Add button itself
             if bodyTag in content:
                 addPos = len(bodyTag)
                 pos = content.index(bodyTag) + addPos
                 content = content[:pos] + backButton + content[pos:]
+
             # Add script to redirect user back to search
             if endBodyTag in content:
                 pos = content.index(endBodyTag)
@@ -107,6 +113,14 @@ def search_result():
             "message": f"received: {message}"
         }
         flask.Response(response=json.dumps(return_data), status=201)
+        """endpoint_url = "http://127.0.0.1:8000/views/search-result"
+        response = requests.post(endpoint_url, json=return_data)
+        if response.status_code == 200:
+            print("Sent data")
+            return jsonify({'message': 'POST request sent successfully'})
+        else:
+            return jsonify({'error': 'Failed to send POST request to JavaScript'})"""
+
 
         result_file = open("ui/templates/result.html", 'r')
 
