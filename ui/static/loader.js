@@ -1,13 +1,10 @@
-fetch('/search-result', {
-    method: 'POST',
-})
-    .then(response => {
-        if(response.status === 201) {
-            console.log("Message received succesfully");
-        } else {
-            console.error("Unexpected status code: ", response.status);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    })
+fetch('/search-result')
+  .then(response => {
+    return response.text();
+  })
+  .then(data => {
+    console.log('Received message:', data);
+  })
+  .catch(error => {
+    console.error('Fetch error from loader:', error);
+  });
