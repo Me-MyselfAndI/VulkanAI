@@ -3,8 +3,10 @@ function redirectToSearch() {
     window.location.href = "http://127.0.0.1:8000/views/";
 }
 
+//Slider JS
 var inputRange = document.getElementsByClassName('range')[0],
     maxValue = 100, // the higher the smoother when dragging
+    modValue = 0,
     speed = 5,
     currValue, rafID;
 
@@ -28,7 +30,11 @@ function unlockEndHandler() {
 
     // determine if we have reached success or not
     if(currValue >= maxValue) {
-        successHandler();
+        modMax();
+    }
+    if(currValue >= 20 && currValue < 40) {
+        //rafID = window.requestAnimationFrame(animateHandler);
+        modOne();
     }
     else {
         rafID = window.requestAnimationFrame(animateHandler);
@@ -44,30 +50,38 @@ function animateHandler() {
     // update input range
     inputRange.value = currValue;
 
-    //Change slide thumb color on mouse up
-    if (currValue < 20) {
-        inputRange.classList.remove('ltpurple');
-    }
-    if (currValue < 40) {
-        inputRange.classList.remove('purple');
-    }
-    if (currValue < 60) {
-        inputRange.classList.remove('pink');
-    }
-
     // determine if we need to continue
     if(currValue > -1) {
       window.requestAnimationFrame(animateHandler);
     }
-
-    // decrement value
-    currValue = currValue - speed;
+    if (currValue < 20) {
+        // decrement value
+        currValue = currValue - speed;
+    }
+    if (currValue > 20) {
+        currValue = 20;
+    }
+    if (currValue > 40) {
+        currValue = 40;
+    }
+    if (currValue > 60) {
+        currValue = 60;
+    }
+    if (currValue > 80) {
+        currValue = 80;
+    }
 }
 
 
-function successHandler() {
-    console.log("Very end")
-};
+function modMax() {
+    console.log("Most modified");
+    modValue = 5;
+}
+
+function modOne() {
+     console.log("Set to 1 mod ");
+     modValue = 1;
+}
 
 // bind events
 inputRange.addEventListener('mousedown', unlockStartHandler, false);
@@ -78,24 +92,30 @@ inputRange.addEventListener('touchend', unlockEndHandler, false);
 // move gradient
 inputRange.addEventListener('input', function() {
     //Change slide thumb color on way up
-    if (this.value > 20) {
-        inputRange.classList.add('ltpurple');
-    }
-    if (this.value > 40) {
-        inputRange.classList.add('purple');
-    }
-    if (this.value > 60) {
-        inputRange.classList.add('pink');
-    }
-
-    //Change slide thumb color on way down
     if (this.value < 20) {
-        inputRange.classList.remove('ltpurple');
+        console.log("0 mods");
     }
-    if (this.value < 40) {
-        inputRange.classList.remove('purple');
+    if (this.value > 20 && this.value < 40) {
+        console.log("1 mods");
     }
-    if (this.value < 60) {
-        inputRange.classList.remove('pink');
+    if (this.value > 40 && this.value < 60) {
+        console.log("2 mods");
+    }
+    if (this.value > 60 && this.value < 80) {
+        console.log("3 mods");
+    }
+    if (this.value > 80 && this.value < 100) {
+        console.log("4 mods");
     }
 });
+
+fetch('/search-result')
+  .then(response => {
+    return response.text();
+  })
+  .then(data => {
+    console.log('Received message:', data);
+  })
+  .catch(error => {
+    console.error('Fetch error from redirect:', error);
+  });

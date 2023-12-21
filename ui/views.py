@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, render_template_string
+from flask import Blueprint, render_template, request, redirect, url_for, render_template_string
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 #from compression.compression_engine import CompressionEngine
@@ -30,7 +30,7 @@ def search_result():
     result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
 
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
-    if request.method == "POST":
+    if request.method == "POST" and result_file.read() == "":
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
@@ -87,13 +87,12 @@ def search_result():
                 addPos = len(bodyTag)
                 pos = content.index(bodyTag) + addPos
                 content = content[:pos] + backButton + content[pos:]
-
             # Add script to redirect user back to search
             if endBodyTag in content:
                 pos = content.index(endBodyTag)
                 content = content[:pos] + scriptLink + content[pos:]
             result_file.write(content)
-
+        print("Added overlay")
         #Transfer template to final result file and start transfering important data into the template
         template = ""
         """with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
@@ -112,14 +111,14 @@ def search_result():
             "status": "success",
             "message": f"received: {message}"
         }
-        flask.Response(response=json.dumps(return_data), status=201)
-        """endpoint_url = "http://127.0.0.1:8000/views/search-result"
+        #flask.Response(response=json.dumps(return_data), status=201)
+        endpoint_url = "http://127.0.0.1:8000/views/search-result"
         response = requests.post(endpoint_url, json=return_data)
-        if response.status_code == 200:
+        flask.Response(response=response, status=201)
+        if response.status_code == 200 or response.status_code == 201:
             print("Sent data")
-            return jsonify({'message': 'POST request sent successfully'})
         else:
-            return jsonify({'error': 'Failed to send POST request to JavaScript'})"""
+            print("Failed to send")
 
 
         result_file = open("ui/templates/result.html", 'r')
