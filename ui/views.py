@@ -68,7 +68,7 @@ def search_result():
         bodyTag = '<body>'
         endBodyTag = '</body>'
         backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
-        slider = '<input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/>'
+        slider = '<div id="slider-container"><input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/><p class="num" id="start">0</p><p class="num" id="one">1</p><p class="num" id="mid">2</p><p class="num" id="three">3</p><p class="num" id="end">4</p></div>'
         content = open("ui/templates/result.html", "r", encoding="utf-8").read()#Get current content of the html file to change it
 
         with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:

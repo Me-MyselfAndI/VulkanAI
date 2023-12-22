@@ -32,9 +32,15 @@ function unlockEndHandler() {
     if(currValue >= maxValue) {
         modMax();
     }
-    if(currValue >= 20 && currValue < 40) {
+    if(currValue >= 25 && currValue < 50) {
         //rafID = window.requestAnimationFrame(animateHandler);
         modOne();
+    }
+    if(currValue >= 50 && currValue < 75) {
+        modTwo();
+    }
+    if(currValue >= 75 && currValue < 100) {
+        modThree();
     }
     else {
         rafID = window.requestAnimationFrame(animateHandler);
@@ -54,33 +60,45 @@ function animateHandler() {
     if(currValue > -1) {
       window.requestAnimationFrame(animateHandler);
     }
-    if (currValue < 20) {
+    if (currValue < 25) {
         // decrement value
-        currValue = currValue - speed;
+        //currValue = currValue - speed;
+        currValue = 0
     }
-    if (currValue > 20) {
-        currValue = 20;
+    if (currValue > 25) {
+        currValue = 25;
     }
-    if (currValue > 40) {
-        currValue = 40;
+    if (currValue > 50) {
+        currValue = 50;
     }
-    if (currValue > 60) {
-        currValue = 60;
+    if (currValue > 75) {
+        currValue = 75;
     }
-    if (currValue > 80) {
-        currValue = 80;
+    else {
+        // decrement value
+        // currValue = currValue - speed;
     }
 }
 
 
 function modMax() {
     console.log("Most modified");
-    modValue = 5;
+    modValue = 4;
 }
 
 function modOne() {
      console.log("Set to 1 mod ");
      modValue = 1;
+}
+
+function modTwo() {
+     console.log("Set to 2 mod ");
+     modValue = 2;
+}
+
+function modThree() {
+     console.log("Set to 3 mod ");
+     modValue = 3;
 }
 
 // bind events
@@ -92,20 +110,17 @@ inputRange.addEventListener('touchend', unlockEndHandler, false);
 // move gradient
 inputRange.addEventListener('input', function() {
     //Change slide thumb color on way up
-    if (this.value < 20) {
+    if (this.value < 25) {
         console.log("0 mods");
     }
-    if (this.value > 20 && this.value < 40) {
+    if (this.value > 25 && this.value < 50) {
         console.log("1 mods");
     }
-    if (this.value > 40 && this.value < 60) {
+    if (this.value > 50 && this.value < 75) {
         console.log("2 mods");
     }
-    if (this.value > 60 && this.value < 80) {
+    if (this.value > 75 && this.value < 100) {
         console.log("3 mods");
-    }
-    if (this.value > 80 && this.value < 100) {
-        console.log("4 mods");
     }
 });
 
