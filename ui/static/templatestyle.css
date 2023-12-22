@@ -83,14 +83,41 @@ h2 {
 }
 
 /*SLIDER CSS*/
+#slider-container {
+  position: fixed;
+  left: 84%;
+  top: 3%;
+}
 
+.num {
+  position: absolute;
+}
+
+#start {
+  left: -50%;
+}
+
+#one {
+  left: -25%;
+}
+
+#three {
+  left: 25%;
+}
+
+#end {
+  left: 48%;
+}
+
+
+#slider {
+  border-left: 6px solid gray;
+  border-right: 6px solid gray;
+}
 
 .range {
   -webkit-appearance: none;
   -moz-appearance: none;
-  position: fixed;
-  left: 90%;
-  top: 3%;
   width: 400px;
   margin-top: 10px;
   transform: translate(-50%, -50%);
@@ -198,3 +225,4 @@ input[type=range]::-webkit-slider-thumb:active {
 input[type=range]::-moz-range-thumb:active {
   cursor: -moz-grabbing;
 }
+
