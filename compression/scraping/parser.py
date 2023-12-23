@@ -1,5 +1,4 @@
 import copy
-import random
 
 from bs4 import BeautifulSoup
 import math
@@ -312,16 +311,3 @@ class Parser:
                     break
 
         return discovered_tags
-
-
-def main():
-    with open('test.html', encoding='utf-8') as file:
-        parser = Parser(html=file)
-
-    print('Website Menu:\n\t', parser.find_text_content())
-
-    # parser.find_marketplace_product_groups()
-
-
-if __name__ == "__main__":
-    main()

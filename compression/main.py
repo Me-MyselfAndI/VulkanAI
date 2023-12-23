@@ -1,11 +1,15 @@
+import json
+
 from compression.ai.astica_engine import AsticaEngine
-from compression.scraping.crawler import Crawler
+from compression.ai.gemini_engine import GeminiEngine
 from compression.ai.gpt_engine import GPTEngine
+
+from compression.scraping.crawler import Crawler
 from compression.scraping.parser import Parser
 
 
 class ScrapingController:
-    def __init__(self, gpt=None, astica=None):
+    def __init__(self, gpt=None, astica=None, gemini=None):
         if gpt is None:
             self._gpt = GPTEngine()
         else:
@@ -15,6 +19,11 @@ class ScrapingController:
             self._astica = AsticaEngine()
         else:
             self._astica = astica
+
+        if gemini is None:
+            self._gemini = GeminiEngine()
+        else:
+            self._gemini = gemini
 
     def _filter_marketplace_products(self, product_info, search_query, threshold=3):
         print(f"Products ({len(product_info)}):")
@@ -36,44 +45,30 @@ class ScrapingController:
         for i, product in enumerate(nonempty_description_products):
             print(i, product)
 
-        # astica_descriptions = []
-        # for i, (product, (astica_response_code, astica_result)) in enumerate(
-        #     zip(
-        #         nonempty_description_products,
-        #         self._astica.get_image_descriptions_async(list(map(lambda x: x['img'], nonempty_description_products)))
-        #     )
-        # ):
-        #     try:
-        #         if astica_response_code != 200:
-        #             print(f'\u001b[31mAstica returned code {astica_response_code} on this product; error message: {astica_result}\n skipping\u001b[0m')
-        #             astica_descriptions.append(f'NO IMAGE-BASED DESCRIPTION: {astica_result}')
-        #         else:
-        #             astica_descriptions.append(astica_result)
-        #     except Exception as e:
-        #         print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
-        #         astica_descriptions.append(
-        #             f'NO IMAGE-BASED DESCRIPTION')
-
         args, image_urls = [], []
         for product in nonempty_description_products:
-            prompt = (f"Given the user's preference of '{search_query}', how well does the product "
-                      f"with data '{product['text']}' with this image match the "
-                      f"criteria? Answer from 1 (not relevant at all) to 5 (great match). "
-                      f"Only return the number, nothing else")
+            product_str = '['
+            for property in product['text']:
+                product_str += property + ";"
+            if len(product_str) > 0:
+                product_str = product_str[:-1] + ']'
+            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
+                      f"Rate how much it fits. Answer 1-5, ONLY NUMBER, NO TEXT AT ALL. "
+                      f"Only if this question for this product makes no sense, return 0")
             args.append(prompt)
             image_urls.append([product['img']])
-        gpt_responses = self._gpt.get_responses_async('{}', args=args, image_urls=image_urls)
+        llm_responses = self._gemini.get_responses_async('{}', args=args, image_urls=image_urls)
 
-        for i, (product, gpt_response) in enumerate(zip(nonempty_description_products, gpt_responses)):
+        for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
-                if not '1' <= gpt_response <= '5' or len(gpt_response) > 1:
-                    print(f"\u001b[31mWARNING! BAD RESPONSE: {gpt_response}")
-                    gpt_response = 0
+                if not '1' <= llm_response <= '5' or len(llm_response) > 1:
+                    print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
+                    llm_response = 0
 
-                gpt_response = int(gpt_response)
-                print(product, gpt_response, "\n")
+                llm_response = int(llm_response)
+                print(product, llm_response, "\n")
 
-                if gpt_response >= threshold:
+                if llm_response >= threshold:
                     filtered_products.append(product)
             except Exception as e:
                 print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
@@ -112,18 +107,24 @@ class ScrapingController:
             <div class="products">
             """
 
-        product_titles = self._gpt.get_responses_async(
-            "A product in a marketplace has properties: {}. Some of it is the title. Find it, "
-            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products])
-        for product, product_title in zip(products, product_titles):
-            product_block = f"""
-                <div class="product">
-                    <a href="{product['href']}" target="_blank">
-                        <img src="{product['img']}" alt="{product['text']}">
-                        <p>{product_title}</p>
-                    </a>
-                </div>
-                """
+        product_properties = self._gemini.get_responses_async(
+            "This is a product with some properties I am giving you: {}. You must return me each property"
+            "with its respective value, in the JSON format, nothing else", [product['text'] for product in products])
+
+        for i in range(len(product_properties)):
+            product_properties[i] = json.loads(product_properties[i].strip('```'))
+        for product, props in zip(products, product_properties):
+            try:
+                product_block = f"""
+                    <div class="product">
+                        <a href="{product['href']}" target="_blank">
+                            <img src="{product['img']}" alt="{product['text']}">
+                            {''.join(['<p>' + key.capitalize() + ': ' + value + '</p>' for key, value in props.items()])}
+                        </a>
+                    </div>
+                    """
+            except Exception as e:
+                print(e)
             html_content += product_block
 
         html_content += """
@@ -170,7 +171,7 @@ class ScrapingController:
             request = (f"On a scale of 1 to 5, how likely is it that the menu item \"{element['text']}\" contains "
                        f"what the query '{search_query}' is searching for? Make sure the response only consists of a "
                        f"number between 1 to 5, NOTHING else")
-            response = self._gpt.get_response(request)
+            response = self._gemini.get_response(request)
             print(i, element['text'], response)
             if not '1' <= response <= '5' or len(response) > 1:
                 print(f"\u001b[31mWARNING! BAD RESPONSE: {response}")
@@ -190,28 +191,34 @@ class ScrapingController:
         return html_content
 
     def get_parsed_website_html(self, website, search_query, threshold=4):
+        try:
+            marketplace_likelihood = self._gpt.get_response(
+                f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
+                f'likelihood from 1 to 5, and output nothing other than the number')
 
-        marketplace_likelihood = self._gpt.get_response(
-            f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
-            f'likelihood from 1 to 5, and output nothing other than the number')
+            if marketplace_likelihood >= '4':
+                parser = Parser(website['url'], html=website['html'])
+                product_groups = parser.find_container_groups(website['url'])
+                filtered_products = self._filter_marketplace_products(product_groups, search_query)
+                return self._generate_container_html(filtered_products)
 
-        if marketplace_likelihood >= '4':
-            parser = Parser(website['url'], html=website['html'])
-            product_groups = parser.find_container_groups(website['url'])
-            filtered_products = self._filter_marketplace_products(product_groups, search_query)
-            return self._generate_container_html(filtered_products)
+            else:
+                crawler = Crawler(self._gpt)
+                crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold, lang=website.get('lang', 'english'))
 
-        else:
-            crawler = Crawler(self._gpt)
-            crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold, lang=website.get('lang', 'english'))
+                print('crawled page URL:', crawled_page['url'])
+                crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'])
+                parsed_content = crawled_page_parser.find_text_content()
 
-            print('crawled page URL:', crawled_page['url'])
-            crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'])
-            parsed_content = crawled_page_parser.find_text_content()
-
-            threshold = 3
-
-            return self._generate_text_wesite_html(parsed_content, search_query, threshold=threshold)
+                return {
+                    'status': 'ok',
+                    'response': self._generate_text_wesite_html(parsed_content, search_query, threshold=threshold)
+                }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'response': str(e)
+            }
 
 
 def main():
@@ -220,11 +227,12 @@ def main():
         products_html = file.read()
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://www.amazon.com/s?k=bike+tires&crid=VO1Z0N6VACIT&sprefix=bike+tires%2Caps%2C107&ref=nb_sb_noss_1',
+            'url': 'https://www.facebook.com/marketplace/109175822435667/vehicles?maxPrice=7500&maxMileage=150000&exact=false',
             'html': products_html,
             'lang': 'english'
         },
-        'Tires for a road bike'
+        'Reliable Japanese car under 5000 USD and 140K miles',
+        threshold=3
     ))
 
 

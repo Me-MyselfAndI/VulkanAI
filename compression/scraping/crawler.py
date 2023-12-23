@@ -18,12 +18,10 @@ parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
-from compression.ai.gpt_engine import GPTEngine
-
 
 class Crawler:
-    def __init__(self, gpt_engine):
-        self.gpt_engine = gpt_engine
+    def __init__(self, llm_engine):
+        self.llm_engine = llm_engine
         options = Options()
         options.add_argument('--headless=new')
         self.driver = webdriver.Chrome(options=options)
@@ -35,7 +33,7 @@ class Crawler:
     def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15, max_recursion_depth=2, lang='english'):
         parser = Parser(website['url'], html=website['html'])
         compressed_original_page_tags = parser.find_text_content()
-        page_content_relevance = self.query_gpt_for_text_relevance(compressed_original_page_tags, search_query)
+        page_content_relevance = self.query_llm_for_text_relevance(compressed_original_page_tags, search_query)
         curr_page_relevance_rate = len([1 for item in page_content_relevance if item >= threshold]) / len(page_content_relevance)
         if max_recursion_depth == 0 or curr_page_relevance_rate >= min_relevance_rate:
             return {
@@ -51,8 +49,8 @@ class Crawler:
             {'item': item, 'text': item.get('text', '')} for ancestor in menu_items.values()
             for item in ancestor.get('items', [])
         ]
-        gpt_evaluations = self.query_gpt_menus_for_relevance(menu_items_flattened, search_query, lang=lang)
-        for i, eval in enumerate(gpt_evaluations):
+        llm_evaluations = self.query_llm_menus_for_relevance(menu_items_flattened, search_query, lang=lang)
+        for i, eval in enumerate(llm_evaluations):
             menu_items_flattened[i]['score'] = eval
 
         print(f'Total of {len(menu_items_flattened)} items before purging')
@@ -106,13 +104,10 @@ class Crawler:
             'html': website['html']
         }
 
-    def query_gpt_menus_for_relevance(self, menu_items, search_query, lang):
-        responses = self.gpt_engine.get_responses_async('{}', [
-            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how likely is it "
-            f"that the menu item \"{menu_item['item'].get('text', '')}\" found in the "
-            f"link \"{menu_item['item']['href']}\" contains what the query \"{search_query}\" is searching for? "
-            f"Language other than \"{lang}\" automatically reduces the score to 1. Make sure the response only "
-            f"consists of a number from 1 to 5, NOTHING else"
+    def query_llm_menus_for_relevance(self, menu_items, search_query, lang):
+        responses = self.llm_engine.get_responses_async('{}', [
+            f"How likely is menu item \"{menu_item['item'].get('text', '')}\" at link \"{menu_item['item']['href']}\" "
+            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1-5, NOTHING else"
             for menu_item in menu_items
         ])
         for i, response in enumerate(responses):
@@ -124,11 +119,10 @@ class Crawler:
 
         return responses
 
-    def query_gpt_for_text_relevance(self, text_items, search_query):
-        responses = self.gpt_engine.get_responses_async('{}', [
-            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how relevant is "
-            f"the menu item \"{text_item['text']}\" to the query \"{search_query}\"? "
-            f"Your response must only consist of a number from 1 to 5, NOTHING else at all"
+    def query_llm_for_text_relevance(self, text_items, search_query):
+        responses = self.llm_engine.get_responses_async('{}', [
+            f"How relevant is the menu item \"{text_item['text']}\" query \"{search_query}\"? "
+            f"Only give number 1-5, NOTHING else"
             for text_item in text_items
         ])
         for i, response in enumerate(responses):
@@ -145,8 +139,8 @@ class Crawler:
         for dropdown in dropdowns:
             options = dropdown.find_elements(By.TAG_NAME, 'option')
             options_texts = [option.text for option in options]
-            most_viable_option = self.gpt_engine.get_response(
-                f"Given the query '{search_query}', which of these options is most relevant: {options_texts}? Only Answer with the exact option")
+            most_viable_option = self.llm_engine.get_response(
+                f"Given query '{search_query}', which option most relevant: {options_texts}? Only answer with this exact option")
             for option in options:
                 if option.text == most_viable_option:
                     option.click()
