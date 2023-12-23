@@ -25,55 +25,7 @@ class ScrapingController:
         else:
             self._gemini = gemini
 
-    def _filter_marketplace_products(self, product_info, search_query, threshold=3):
-        print(f"Products ({len(product_info)}):")
-        for i, product in enumerate(product_info):
-            print(i, product)
 
-        filtered_products = []
-        nonempty_description_products = []
-        for i, product in enumerate(product_info):
-            # Filter out all fully-empty items
-            for text_piece in product['text']:
-                if text_piece.strip() != '':
-                    break
-            else:
-                continue
-            nonempty_description_products.append(product)
-
-        print("Products with descriptions:")
-        for i, product in enumerate(nonempty_description_products):
-            print(i, product)
-
-        args, image_urls = [], []
-        for product in nonempty_description_products:
-            product_str = '['
-            for property in product['text']:
-                product_str += property + ";"
-            if len(product_str) > 0:
-                product_str = product_str[:-1] + ']'
-            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
-                      f"Rate how much it fits. Answer 1-5, ONLY NUMBER, NO TEXT AT ALL. "
-                      f"Only if this question for this product makes no sense, return 0")
-            args.append(prompt)
-            image_urls.append([product['img']])
-        llm_responses = self._gemini.get_responses_async('{}', args=args, image_urls=image_urls)
-
-        for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
-            try:
-                if not '1' <= llm_response <= '5' or len(llm_response) > 1:
-                    print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
-                    llm_response = 0
-
-                llm_response = int(llm_response)
-                print(product, llm_response, "\n")
-
-                if llm_response >= threshold:
-                    filtered_products.append(product)
-            except Exception as e:
-                print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
-                continue
-        return filtered_products
 
     def _generate_container_html(self, products):
         html_content = """
@@ -197,9 +149,10 @@ class ScrapingController:
                 f'likelihood from 1 to 5, and output nothing other than the number')
 
             if marketplace_likelihood >= '4':
+                crawler = Crawler(self._gemini)
                 parser = Parser(website['url'], html=website['html'])
                 product_groups = parser.find_container_groups(website['url'])
-                filtered_products = self._filter_marketplace_products(product_groups, search_query)
+                filtered_products = crawler.filter_marketplace_products(product_groups, search_query, threshold=3)
                 return self._generate_container_html(filtered_products)
 
             else:
