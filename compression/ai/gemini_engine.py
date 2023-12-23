@@ -12,19 +12,14 @@ import yaml
 
 
 class GeminiEngine:
-    def __init__(self, api_key=None, org_url=None):
-        if (api_key is None) != (org_url is None):
-            print('\u001b[31mOne of the keys for gpt was default while other was provided.'
-                  'Either provide both GPT keys, or use both default')
-            return
-
+    def __init__(self, api_key=None):
         if api_key is None:
             with open(r'keys\keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gemini-api']
 
         genai.configure(api_key=api_key)
         generation_config = genai.types.GenerationConfig(
-            temperature=0.2
+            temperature=0.5
         )
         safety_settings = [
             {
@@ -44,8 +39,8 @@ class GeminiEngine:
                 "threshold": "BLOCK_NONE"
             }
         ]
-        self.text_model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings)
-        self.vision_model = genai.GenerativeModel('gemini-pro-vision')
+        self.text_model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings, generation_config=generation_config)
+        self.vision_model = genai.GenerativeModel('gemini-pro-vision', safety_settings=safety_settings, generation_config=generation_config)
 
     def get_response(self, prompt: str, image_urls=None):
         if image_urls is None or not image_urls:
