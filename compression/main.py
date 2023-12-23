@@ -1,3 +1,5 @@
+import json
+
 from compression.ai.astica_engine import AsticaEngine
 from compression.ai.gemini_engine import GeminiEngine
 from compression.ai.gpt_engine import GPTEngine
@@ -50,7 +52,9 @@ class ScrapingController:
                 product_str += property + ";"
             if len(product_str) > 0:
                 product_str = product_str[:-1] + ']'
-            prompt = f"Rate how well {product_str} (image attached) matches '{search_query}' Answer 1-5, ONLY NUMBER, NO TEXT"
+            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
+                      f"Rate how much it fits. Answer 1-5, ONLY NUMBER, NO TEXT AT ALL. "
+                      f"Only if this question for this product makes no sense, return 0")
             args.append(prompt)
             image_urls.append([product['img']])
         llm_responses = self._gemini.get_responses_async('{}', args=args, image_urls=image_urls)
@@ -103,18 +107,24 @@ class ScrapingController:
             <div class="products">
             """
 
-        product_titles = self._gemini.get_responses_async(
-            "A product in a marketplace has properties: {}. Some of it is the title. Find it, "
-            "and print. Give NO other text aside from what I asked. ", [product['text'] for product in products])
-        for product, product_title in zip(products, product_titles):
-            product_block = f"""
-                <div class="product">
-                    <a href="{product['href']}" target="_blank">
-                        <img src="{product['img']}" alt="{product['text']}">
-                        <p>{product_title}</p>
-                    </a>
-                </div>
-                """
+        product_properties = self._gemini.get_responses_async(
+            "This is a product with some properties I am giving you: {}. You must return me each property"
+            "with its respective value, in the JSON format, nothing else", [product['text'] for product in products])
+
+        for i in range(len(product_properties)):
+            product_properties[i] = json.loads(product_properties[i].strip('```'))
+        for product, props in zip(products, product_properties):
+            try:
+                product_block = f"""
+                    <div class="product">
+                        <a href="{product['href']}" target="_blank">
+                            <img src="{product['img']}" alt="{product['text']}">
+                            {''.join(['<p>' + key.capitalize() + ': ' + value + '</p>' for key, value in props.items()])}
+                        </a>
+                    </div>
+                    """
+            except Exception as e:
+                print(e)
             html_content += product_block
 
         html_content += """
@@ -217,11 +227,11 @@ def main():
         products_html = file.read()
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://students.oscar.gatech.edu/BannerExtensibility/customPage/page/GATECH_HOMEPAGE',
+            'url': 'https://www.facebook.com/marketplace/109175822435667/vehicles?maxPrice=7500&maxMileage=150000&exact=false',
             'html': products_html,
             'lang': 'english'
         },
-        'Register for CS 2110 GA Tech',
+        'Reliable Japanese car under 5000 USD and 140K miles',
         threshold=3
     ))
 

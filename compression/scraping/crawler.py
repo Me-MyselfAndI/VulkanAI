@@ -18,8 +18,6 @@ parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
-from compression.ai.gpt_engine import GPTEngine
-
 
 class Crawler:
     def __init__(self, llm_engine):
@@ -109,7 +107,7 @@ class Crawler:
     def query_llm_menus_for_relevance(self, menu_items, search_query, lang):
         responses = self.llm_engine.get_responses_async('{}', [
             f"How likely is menu item \"{menu_item['item'].get('text', '')}\" at link \"{menu_item['item']['href']}\" "
-            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1 to 5, NOTHING else"
+            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1-5, NOTHING else"
             for menu_item in menu_items
         ])
         for i, response in enumerate(responses):
@@ -123,9 +121,8 @@ class Crawler:
 
     def query_llm_for_text_relevance(self, text_items, search_query):
         responses = self.llm_engine.get_responses_async('{}', [
-            f"On a scale of 1 to 5 where 1 is completely irrelevant and 5 is the spot-on answer, how relevant is "
-            f"the menu item \"{text_item['text']}\" to the query \"{search_query}\"? "
-            f"Your response must only consist of a number from 1 to 5, NOTHING else at all"
+            f"How relevant is the menu item \"{text_item['text']}\" query \"{search_query}\"? "
+            f"Only give number 1-5, NOTHING else"
             for text_item in text_items
         ])
         for i, response in enumerate(responses):
@@ -143,7 +140,7 @@ class Crawler:
             options = dropdown.find_elements(By.TAG_NAME, 'option')
             options_texts = [option.text for option in options]
             most_viable_option = self.llm_engine.get_response(
-                f"Given the query '{search_query}', which of these options is most relevant: {options_texts}? Only Answer with the exact option")
+                f"Given query '{search_query}', which option most relevant: {options_texts}? Only answer with this exact option")
             for option in options:
                 if option.text == most_viable_option:
                     option.click()
