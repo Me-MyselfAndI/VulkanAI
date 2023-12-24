@@ -1,5 +1,8 @@
 import json
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
 from compression.ai.astica_engine import AsticaEngine
 from compression.ai.gemini_engine import GeminiEngine
 from compression.ai.gpt_engine import GPTEngine
@@ -176,15 +179,22 @@ class ScrapingController:
 
 def main():
     scraping_controller = ScrapingController()
-    with open('compression/test_input.html', encoding='utf-8') as file:
-        products_html = file.read()
+    options = Options()
+    options.add_argument('--headless=new')
+    options.add_argument("window-size=19200,10800")
+    driver = webdriver.Chrome(options=options)
+    driver.get('https://www.lenovo.com/us/en/d/deals/quick-ship/')
+    products_html = driver.page_source
+    # with open('compression/test_input.html', encoding='utf-8') as file:
+    #     products_html = file.read()
+
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://www.facebook.com/marketplace/109175822435667/vehicles?maxPrice=7500&maxMileage=150000&exact=false',
+            'url': 'https://www.lenovo.com/us/en/d/deals/quick-ship/',
             'html': products_html,
             'lang': 'english'
         },
-        'Reliable Japanese car under 5000 USD and 140K miles',
+        'Laptop under 1000 usd fast delivery',
         threshold=3
     ))
 

@@ -24,6 +24,7 @@ class Crawler:
     def __init__(self, llm_engine):
         self.llm_engine = llm_engine
         options = Options()
+        options.add_argument("window-size=19200,10800")
         options.add_argument('--headless=new')
         self.driver = webdriver.Chrome(options=options)
 

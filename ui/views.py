@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, render_template_string
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
-#from compression.compression_engine import CompressionEngine
 import yaml, os, flask, json, jsonify, requests
 from compression.main import ScrapingController
 
@@ -32,19 +31,21 @@ def search_result():
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     if request.method == "POST" and result_file.read() == "":
         received_data = request.get_json()
-        print(f"received data: {received_data['data']}")
+        print(f"Received Data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
         formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(formattedSearch)
+        print(f"Formatted Search: {formattedSearch}")
 
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
-        search_engine.update_links(formattedSearch.strip("\""), start_entry=0)
+        search_engine.update_links(formattedSearch.strip("\""), search_website=received_data['pref-website'], start_entry=0)
         # Open link (default opens 0th link, otherwise use link_number argument)
         page = search_engine.get_first_website()
         #Get page url
+        print("HERE")
         website_url = page["url"]
         #If user has a prefered website to search on, use that website
+        print("HERE")
         if received_data['pref-website'] == "":
             print("No prefered website")
         else:

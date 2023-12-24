@@ -1,14 +1,27 @@
+import time
 from urllib.parse import urlparse, urljoin
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 import yaml
 from bs4 import BeautifulSoup
-# from serpapi import GoogleSearch as _RunSearch
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 from serpapi import DuckDuckGoSearch as _RunSearch
 import requests
 
 
 class SearchEngine:
     def __init__(self):
+        options = Options()
+        options.add_argument('--headless=new')
+        options.add_argument('--disable-browser-side-navigation')
+        options.add_argument("window-size=19200,10800")
+        self.driver = webdriver.Chrome(options=options)
+
+        self.driver_timeout = 10
+
         self.last_search = {"res": [], "prompt": ""}
         with open(r'keys\keys.yaml') as keys_file:
             self.key = yaml.load(keys_file, yaml.FullLoader)['keys']['web-search']['serp-api']
@@ -40,9 +53,16 @@ class SearchEngine:
 
     def get_website(self, link_number):
         website_url = self.last_search["res"][link_number]
-        response = requests.get(website_url)
 
-        website_content = response.content
+        print(1)
+        self.driver.get(website_url)
+        print(2)
+        WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(By.XPATH, "//body/*")) > 0)
+        print(3)
+        website_content = self.driver.page_source
+
+        print(4)
+        self.driver.quit()
         soup = BeautifulSoup(website_content, 'html.parser')
         link_tags = soup.find_all('link', rel='stylesheet')
         css_content = []
@@ -66,7 +86,7 @@ if __name__ == '__main__':
     search_engine = SearchEngine()
     # Use update-links method to refresh the search results (stored inside the class).
     # Start entry is 0 by default, it's the pagination offset
-    search_engine.update_links("Used Honda Sedan for sale with 130k or less miles under 6k in good condition within 30 miles of Atlanta", start_entry=0, search_website='facebook.com')
+    search_engine.update_links("Laptop under 1000 usd fast delivery", start_entry=0, search_website='facebook.com')
     # Open link (default opens 0th link, otherwise use link_number argument)
     page = search_engine.get_first_website()
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
