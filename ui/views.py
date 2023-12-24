@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, render
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 #from compression.compression_engine import CompressionEngine
-import yaml, os, flask, json, jsonify, requests
+import yaml, os, flask, json, jsonify, requests, time
 from compression.main import ScrapingController
 
 #Init Classes
@@ -22,7 +22,13 @@ result_file = open("ui/templates/result.html", 'w')#Clean results file
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
+    result_file = open("ui/templates/result.html", 'w')  # Clean results file
     return render_template("index.html")
+
+@views.route("/go-to")
+def go_to():
+    print("Redirected to new page")
+    return redirect(url_for("views.search_result"))
 
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
@@ -57,7 +63,7 @@ def search_result():
         print(scraping_controller.get_parsed_website_html(website, formattedSearch))
         #Save HTML ---------------------------------------------------------------
         with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-            file.write(scraping_controller.get_parsed_website_html(website, formattedSearch))
+            file.write(str(scraping_controller.get_parsed_website_html(website, formattedSearch)))
             print("Saved")
 
         #Add Overlay button which allows users to go back on page
@@ -114,9 +120,11 @@ def search_result():
         #flask.Response(response=json.dumps(return_data), status=201)
         endpoint_url = "http://127.0.0.1:8000/views/search-result"
         response = requests.post(endpoint_url, json=return_data)
-        flask.Response(response=response, status=201)
+        #flask.Response(response=response, status=201)
         if response.status_code == 200 or response.status_code == 201:
             print("Sent data")
+            go_to()
+            #return redirect(url_for("views.go_to"))
         else:
             print("Failed to send")
 
@@ -156,10 +164,6 @@ def test():
     # Open link (default opens 0th link, otherwise use link_number argument)
     page = search_engine.get_first_website()
     return render_template_string(page['html'])
-
-@views.route("/go-to")
-def go_to():
-    return redirect(url_for("views.search_result"))
 
 @views.route("/format-search", methods=["GET", "POST"])
 def format_search():
