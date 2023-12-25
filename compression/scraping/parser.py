@@ -235,7 +235,6 @@ class Parser:
             if len(menu_items[ancestor]['items']) == 0:
                 menu_items.pop(ancestor)
 
-        print()
         # Remove same items
         remove_same_ancestors(menu_items)
 

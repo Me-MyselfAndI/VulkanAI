@@ -54,14 +54,10 @@ class SearchEngine:
     def get_website(self, link_number):
         website_url = self.last_search["res"][link_number]
 
-        print(1)
         self.driver.get(website_url)
-        print(2)
         WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(By.XPATH, "//body/*")) > 0)
-        print(3)
         website_content = self.driver.page_source
 
-        print(4)
         self.driver.quit()
         soup = BeautifulSoup(website_content, 'html.parser')
         link_tags = soup.find_all('link', rel='stylesheet')

@@ -42,10 +42,8 @@ def search_result():
         # Open link (default opens 0th link, otherwise use link_number argument)
         page = search_engine.get_first_website()
         #Get page url
-        print("HERE")
         website_url = page["url"]
         #If user has a prefered website to search on, use that website
-        print("HERE")
         if received_data['pref-website'] == "":
             print("No prefered website")
         else:

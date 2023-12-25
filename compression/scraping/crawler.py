@@ -82,19 +82,22 @@ class Crawler:
             if len(product_str) > 0:
                 product_str = product_str[:-1] + ']'
             prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
-                      f"Rate how much it fits. Answer 1-5, ONLY NUMBER, NO TEXT AT ALL. "
-                      f"Only if this question for this product makes no sense, return 0")
+                      f"Rate how much it fits. Answer 1-5, and the ranking MUST BE THE FIRST THING YOU RESPOND WITH. "
+                      f"THE REMAINING TEXT MUST BE VERY CONCISE. I ONLY HAVE A SHORT TEXTBOX FOR USER TO SEE"
+                      f"If it's not possible to even estimate the answer, you return 0 and explanation why you consider"
+                      f"it utterly irrelevant to the prompt. Be extremely careful with your math: the product is being "
+                      f"selected for the nuclear program, and if you mess up, the humanity may end up destroyed")
             args.append(prompt)
             image_urls.append([product['img']])
         llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
-                if not '1' <= llm_response <= '5' or len(llm_response) > 1:
+                if not '1' <= llm_response < '6':
                     print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
                     llm_response = 0
 
-                llm_response = int(llm_response)
+                llm_response = int(llm_response[0])
                 print(product, llm_response, "\n")
 
                 if llm_response >= threshold:

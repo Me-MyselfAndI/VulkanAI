@@ -12,14 +12,14 @@ import yaml
 
 
 class GeminiEngine:
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, temperature=0.5):
         if api_key is None:
             with open(r'keys\keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gemini-api']
 
         genai.configure(api_key=api_key)
-        generation_config = genai.types.GenerationConfig(
-            temperature=0.5
+        self.generation_config = genai.types.GenerationConfig(
+            temperature=temperature
         )
         safety_settings = [
             {
@@ -39,28 +39,42 @@ class GeminiEngine:
                 "threshold": "BLOCK_NONE"
             }
         ]
-        self.text_model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings, generation_config=generation_config)
-        self.vision_model = genai.GenerativeModel('gemini-pro-vision', safety_settings=safety_settings, generation_config=generation_config)
+        self.text_model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings,
+                                                generation_config=self.generation_config)
+        self.vision_model = genai.GenerativeModel('gemini-pro-vision', safety_settings=safety_settings,
+                                                  generation_config=self.generation_config)
 
-    def get_response(self, prompt: str, image_urls=None):
-        if image_urls is None or not image_urls:
-            model = self.text_model
-            request = [prompt]
-        else:
-            model = self.vision_model
-            request = [prompt]
-            for url in image_urls:
-                img = requests.get(url)
-                request.append(PIL.Image.open(BytesIO(img.content)))
+    def get_response(self, prompt: str, image_urls=None, temperature=None):
+        if temperature is None:
+            generation_config = self.generation_config
         try:
-            response = model.generate_content(request)
+            if image_urls is None or not image_urls:
+                model = self.text_model
+                request = [prompt]
+            else:
+                model = self.vision_model
+                request = [prompt]
+                for url in image_urls:
+                    img = requests.get(url)
+                    request.append(PIL.Image.open(BytesIO(img.content)))
         except Exception as error:
-            print(f'\u001b[33mWarning: Gemini failed to respond:  {error}\n\tRequest:  {request}\u001b[0m')
+            print(f"\u001b[33mWarning: image processing issue encountered for image {url}. Error: {error}\u001b[0m")
             return "1"
+        try:
+            response = model.generate_content(request, generation_config=generation_config)
+        except Exception as error:
+            if error.code == 429:
+                sleep(1)
+                try:
+                    response = model.generate_content(request, generation_config=generation_config)
+                    return response.text.strip()
+                except Exception as error:
+                    print(f'\u001b[33mWarning: Gemini failed to respond:  {error}\n\tRequest:  {request}\u001b[0m')
+                    return "1"
 
         return response.text.strip()
 
-    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=15):
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=50, temperature=None):
         results = []
         if image_urls and (len(args) in (0, len(image_urls))):
             use_images = True
@@ -78,7 +92,7 @@ class GeminiEngine:
                     batch_images = image_urls[i * batches: (i + 1) * batches]
                     # Submit each request to the ThreadPoolExecutor
                     futures.extend(
-                        executor.submit(self.get_response, request, image) for request, image in
+                        executor.submit(self.get_response, request, image, temperature) for request, image in
                         zip(batch_requests, batch_images)
                     )
                 else:
@@ -100,7 +114,7 @@ class GeminiEngine:
                 except TimeoutError:
                     result = 0, f"Timeout happened - Gemini couldn't return an answer in {timeout} seconds"
                 except Exception as e:
-                    print(e)
+                    print(f"\u001b[31mAnother error encountered when waiting for response from Gemini: {e}\u001b[0m")
                 results.append(result)
 
         return results
