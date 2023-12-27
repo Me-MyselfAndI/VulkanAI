@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, render_template_string
+from flask import Blueprint, render_template, request, redirect, url_for, render_template_string, jsonify
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 #from compression.compression_engine import CompressionEngine
-import yaml, os, flask, json, jsonify, requests, time
+import yaml, os, flask, json, requests, time
 from compression.main import ScrapingController
 
 #Init Classes
@@ -27,7 +27,7 @@ def home():
 
 @views.route("/go-to")
 def go_to():
-    print("Redirected to new page")
+    print("Redirected to search result")
     return redirect(url_for("views.search_result"))
 
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
@@ -41,7 +41,7 @@ def search_result():
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
         formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(formattedSearch)
+        print(f"Formatted Search: {formattedSearch}")
 
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
@@ -109,8 +109,6 @@ def search_result():
             for line in (line.strip("\n") for line in content):
                if "h2" in line:
                    print(line)"""
-
-
         #Send success message so we can start reloade page to render new html
         message = received_data['data']
         return_data = {
@@ -123,18 +121,18 @@ def search_result():
         #flask.Response(response=response, status=201)
         if response.status_code == 200 or response.status_code == 201:
             print("Sent data")
-            go_to()
-            #return redirect(url_for("views.go_to"))
         else:
             print("Failed to send")
-
-
-        result_file = open("ui/templates/result.html", 'r')
+        print("Redirected to go-to page")
+        return redirect(url_for("views.go_to"))
 
     if result_file.read() == "":
+        print("Showing loader")
         return render_template("loader.html")
-    else:
-        return render_template("result.html")
+
+    print("Showing actual result")
+    return render_template("result.html")
+
     #Extra Code
     """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
     tag = '</head>'
