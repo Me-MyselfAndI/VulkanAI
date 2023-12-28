@@ -148,7 +148,7 @@ class ScrapingController:
                        f"number between 1 to 5, NOTHING else")
             response = self._gemini.get_response(request)
             print(i, element['text'], response)
-            if not '1' <= response <= '5' or len(response) > 1:
+            if not '1' <= response < '6' or len(response) > 1:
                 print(f"\u001b[31mWARNING! BAD RESPONSE: {response}")
                 continue
 
@@ -182,7 +182,7 @@ class ScrapingController:
                 print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._gemini)
+                crawler = Crawler(self._gpt)
                 parser = Parser(website['url'], html=website['html'])
                 product_groups = parser.find_container_groups(website['url'])
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query,

@@ -74,7 +74,9 @@ class GeminiEngine:
 
         return response.text.strip()
 
-    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=50, temperature=None):
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=50, temperature=None, use_cheap_model=False):
+        if use_cheap_model:
+            print("\u001b[33mWarning! Cheap models not supported on Gemini. Defaulting to normal model")
         results = []
         if image_urls and (len(args) in (0, len(image_urls))):
             use_images = True

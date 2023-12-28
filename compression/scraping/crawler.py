@@ -81,15 +81,11 @@ class Crawler:
                 product_str += property + ";"
             if len(product_str) > 0:
                 product_str = product_str[:-1] + ']'
-            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
-                      f"Rate how much it fits. Answer 1-5, and the ranking MUST BE THE FIRST THING YOU RESPOND WITH. "
-                      f"THE REMAINING TEXT MUST BE VERY CONCISE. I ONLY HAVE A SHORT TEXTBOX FOR USER TO SEE"
-                      f"If it's not possible to even estimate the answer, you return 0 and explanation why you consider"
-                      f"it utterly irrelevant to the prompt. Be extremely careful with your math: the product is being "
-                      f"selected for the nuclear program, and if you mess up, the humanity may end up destroyed")
+            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str}"
+                      f"Rate how much it fits. Answer 1-5, NUMBER ONLY, NOTHING ELSE")
             args.append(prompt)
-            image_urls.append([product['img']])
-        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls)
+            # image_urls.append([product['img']])
+        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls, use_cheap_model=True)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
