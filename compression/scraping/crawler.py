@@ -2,9 +2,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from compression.scraping.parser import Parser
-
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
+
+from compression.scraping.parser import Parser
 
 chrome_options = Options()
 chrome_options.add_argument("--ignore-certificate-errors")
@@ -23,6 +24,7 @@ class Crawler:
     def __init__(self, llm_engine):
         self.llm_engine = llm_engine
         options = Options()
+        options.add_argument("window-size=19200,10800")
         options.add_argument('--headless=new')
         self.driver = webdriver.Chrome(options=options)
 
@@ -30,7 +32,79 @@ class Crawler:
         self.driver.get(url)
         return self.driver.page_source
 
+    def handle_popup_alert(self, search_query, timeout=10):
+        try:
+            WebDriverWait(self.driver, timeout).until(EC.alert_is_present())
+            alert = self.driver.switch_to.alert
+            alert_text = alert.text
+
+            response = self.llm_engine.get_response(
+                f"Given the query '{search_query}', which of these options is most relevant to the alert "
+                f"'{alert_text}': accept or dismiss? Only Answer with the exact option")
+
+            decision = response.choices[0].text.strip().lower()
+
+            if "dismiss" in decision:
+                alert.dismiss()
+            else:
+                alert.accept()
+
+            return True
+        except TimeoutException:
+            return False
+
+    def filter_marketplace_products(self, product_info, search_query, threshold=3):
+        self.handle_popup_alert(search_query)
+        print(f"Products ({len(product_info)}):")
+        for i, product in enumerate(product_info):
+            print(i, product)
+
+        filtered_products = []
+        nonempty_description_products = []
+        for i, product in enumerate(product_info):
+            # Filter out all fully-empty items
+            for text_piece in product['text']:
+                if text_piece.strip() != '':
+                    break
+            else:
+                continue
+            nonempty_description_products.append(product)
+
+        print("Products with descriptions:")
+        for i, product in enumerate(nonempty_description_products):
+            print(i, product)
+
+        args, image_urls = [], []
+        for product in nonempty_description_products:
+            product_str = '['
+            for property in product['text']:
+                product_str += property + ";"
+            if len(product_str) > 0:
+                product_str = product_str[:-1] + ']'
+            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str}"
+                      f"Rate how much it fits. Answer 1-5, NUMBER ONLY, NOTHING ELSE")
+            args.append(prompt)
+            # image_urls.append([product['img']])
+        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls, use_cheap_model=True)
+
+        for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
+            try:
+                if not '1' <= llm_response < '6':
+                    print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
+                    llm_response = 0
+
+                llm_response = int(llm_response[0])
+                print(product, llm_response, "\n")
+
+                if llm_response >= threshold:
+                    filtered_products.append(product)
+            except Exception as e:
+                print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
+                continue
+        return filtered_products
+
     def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15, max_recursion_depth=2, lang='english'):
+        self.handle_popup_alert(search_query)
         parser = Parser(website['url'], html=website['html'])
         compressed_original_page_tags = parser.find_text_content()
         page_content_relevance = self.query_llm_for_text_relevance(compressed_original_page_tags, search_query)

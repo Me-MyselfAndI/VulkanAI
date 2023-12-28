@@ -38,14 +38,14 @@ def search_result():
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     if request.method == "POST" and result_file.read() == "":
         received_data = request.get_json()
-        print(f"received data: {received_data['data']}")
+        print(f"Received Data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
         formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(formattedSearch)
+        print(f"Formatted Search: {formattedSearch}")
 
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
-        search_engine.update_links(formattedSearch.strip("\""), start_entry=0)
+        search_engine.update_links(formattedSearch.strip("\""), search_website=received_data['pref-website'], start_entry=0)
         # Open link (default opens 0th link, otherwise use link_number argument)
         page = search_engine.get_first_website()
         #Get page url
