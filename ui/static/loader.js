@@ -21,26 +21,3 @@ fetch('/search-result', {
     .catch(error => {
         console.error('Error:', error);
     })
-
-document.addEventListener('DOMContentLoaded', function() {
-            var dataToSend = {
-                key: 'value', // Your data to send
-                anotherKey: 'anotherValue'
-            };
-
-            // Make an AJAX POST request
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/search_result', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        console.log('Response from server:', response);
-                    } else {
-                        console.error('Error:', xhr.status);
-                    }
-                }
-            };
-            xhr.send(JSON.stringify(dataToSend));
-        });

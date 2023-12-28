@@ -115,10 +115,8 @@ def search_result():
             "status": "success",
             "message": f"received: {message}"
         }
-        #flask.Response(response=json.dumps(return_data), status=201)
         endpoint_url = "http://127.0.0.1:8000/views/search-result"
         response = requests.post(endpoint_url, json=return_data)
-        #flask.Response(response=response, status=201)
         if response.status_code == 200 or response.status_code == 201:
             print("Sent data")
         else:
@@ -126,6 +124,7 @@ def search_result():
         print("Redirected to go-to page")
         return redirect(url_for("views.go_to"))
 
+    #Safety check just in case tricky user tries to access page before it loads
     if result_file.read() == "":
         print("Showing loader")
         return render_template("loader.html")
