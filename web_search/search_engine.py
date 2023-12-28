@@ -48,6 +48,12 @@ class SearchEngine:
         self.last_search["res"] = results
         self.last_search["prompt"] = prompt
 
+    def get_urls_by_indices(self, first=0, last=25):
+        links = self.last_search['res']
+        if not first <= last <= len(links):
+            print(f"\u001b[33mBad arguments: requesting [{first, last}] pages while only {len(links)} are available")
+        return links[first:last]
+
     def get_first_website(self):
         return self.get_website(0)
 

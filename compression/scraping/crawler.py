@@ -85,7 +85,7 @@ class Crawler:
                       f"Rate how much it fits. Answer 1-5, NUMBER ONLY, NOTHING ELSE")
             args.append(prompt)
             # image_urls.append([product['img']])
-        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls, use_cheap_model=True)
+        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
