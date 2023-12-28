@@ -13,13 +13,7 @@ function hideLoader() {
 }
 //Show loading animation after searching and while page is loading
 showLoader = function(e) {
-    e.preventDefault();
-    document.getElementById('loader').style.visibility = 'show';
-}
-
-function hideLoaderDemo() {
-    wait(3000);//Wait a little before rendering page
-    hideLoader();
+    document.getElementById('loader').style.visibility = 'visible';
 }
 
 //Non Production Kostyl
@@ -34,9 +28,10 @@ function wait(ms){
 //Move user search result page
 function sendToNewPage() {
     console.log("Sending user to new page");
-    window.location.href = "http://127.0.0.1:8000/views/search-result";
+    showLoader()
     // Check response is ready or not
-    if (xhr.readyState == 4 && xhr.status == 201) {
+    if (xhr.readyState === 4 || xhr.status === 201) {
+        window.location.href = "http://127.0.0.1:8000/views/search-result";
         console.log("Received data");
         console.log(xhr.responseText);
 
@@ -45,7 +40,6 @@ function sendToNewPage() {
 
 document.getElementById("search-button").addEventListener("click", function(event) {
     xhr = null;
-    event.preventDefault();
 
     let prefWebsite = document.getElementById("website-value").value;//Get prefered website for searching
     let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
@@ -92,31 +86,4 @@ $('textarea').on({
         if(e.which === 8 && text.length % 50 === 0 && text.length > 30) $(this).css('height', '-=' + 20 + 'px');
     }
 });
-
-//Receive notification that data is loaded and ready to be displayed
-/*fetch('/search-result', {
-    method: 'POST',
-})
-    .then(response => {
-        if(response.status === 201) {
-            console.log("Message received succesfully");
-        } else {
-            console.error("Unexpected status code: ", response.status);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    })
-
-/*fetch('/search-result')
-  .then(response => {
-    return response.text();
-  })
-  .then(data => {
-    console.log('Received message:', data);
-  })
-  .catch(error => {
-    console.error('Fetch error:', error);
-  });*/
-
 
