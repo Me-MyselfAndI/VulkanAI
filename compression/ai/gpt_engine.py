@@ -20,11 +20,12 @@ class GPTEngine:
                 api_key = keys['api-url']
                 org_url = keys['org-url']
 
+        self.cheap_model = 'gpt-3.5-turbo-1106'
         self.text_model = 'gpt-4-1106-preview'
         self.vision_model = 'gpt-4-vision-preview'
         self.client = openai.OpenAI(api_key=api_key, organization=org_url)
 
-    def get_response(self, prompt: str, image_urls=None):
+    def get_response(self, prompt: str, use_cheap_model=False, image_urls=None):
         if image_urls is None or not image_urls:
             model = self.text_model
             image_requests = []
@@ -40,6 +41,11 @@ class GPTEngine:
                 }
                 for url in image_urls
             ]
+            if use_cheap_model:
+                print("\u001b[33mWarning! GPT 3.5 doesn't support images! Defaulting to non-image request\u001b[0m")
+                image_requests = []
+                model = self.cheap_model
+
         text_request = [{
             "type": "text",
             "text": prompt
@@ -65,14 +71,14 @@ class GPTEngine:
 
         return response.choices[0].message.content
 
-    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=5):
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=5, use_cheap_model=False):
         results = []
         if image_urls and (len(args) in (0, len(image_urls))):
             use_images = True
         else:
             use_images = False
             if image_urls:
-                print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping images!")
+                print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping images!\u001b[0m")
 
         with ThreadPoolExecutor() as executor:
             futures = []
@@ -83,11 +89,11 @@ class GPTEngine:
                     batch_images = image_urls[i * batches: (i + 1) * batches]
                     # Submit each request to the ThreadPoolExecutor
                     futures.extend(
-                        executor.submit(self.get_response, request, image) for request, image in zip(batch_requests, batch_images)
+                        executor.submit(self.get_response, request, use_cheap_model, image) for request, image in zip(batch_requests, batch_images)
                     )
                 else:
                     futures.extend(
-                        executor.submit(self.get_response, request) for request in batch_requests
+                        executor.submit(self.get_response, request, use_cheap_model) for request in batch_requests
                     )
 
                 sleep(0.02)  # Required to wait to avoid overloading the server

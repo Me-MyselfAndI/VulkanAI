@@ -1,5 +1,8 @@
 import json
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
 from compression.ai.astica_engine import AsticaEngine
 from compression.ai.gemini_engine import GeminiEngine
 from compression.ai.gpt_engine import GPTEngine
@@ -25,55 +28,7 @@ class ScrapingController:
         else:
             self._gemini = gemini
 
-    def _filter_marketplace_products(self, product_info, search_query, threshold=3):
-        print(f"Products ({len(product_info)}):")
-        for i, product in enumerate(product_info):
-            print(i, product)
 
-        filtered_products = []
-        nonempty_description_products = []
-        for i, product in enumerate(product_info):
-            # Filter out all fully-empty items
-            for text_piece in product['text']:
-                if text_piece.strip() != '':
-                    break
-            else:
-                continue
-            nonempty_description_products.append(product)
-
-        print("Products with descriptions:")
-        for i, product in enumerate(nonempty_description_products):
-            print(i, product)
-
-        args, image_urls = [], []
-        for product in nonempty_description_products:
-            product_str = '['
-            for property in product['text']:
-                product_str += property + ";"
-            if len(product_str) > 0:
-                product_str = product_str[:-1] + ']'
-            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str} (image attached)"
-                      f"Rate how much it fits. Answer 1-5, ONLY NUMBER, NO TEXT AT ALL. "
-                      f"Only if this question for this product makes no sense, return 0")
-            args.append(prompt)
-            image_urls.append([product['img']])
-        llm_responses = self._gemini.get_responses_async('{}', args=args, image_urls=image_urls)
-
-        for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
-            try:
-                if not '1' <= llm_response <= '5' or len(llm_response) > 1:
-                    print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
-                    llm_response = 0
-
-                llm_response = int(llm_response)
-                print(product, llm_response, "\n")
-
-                if llm_response >= threshold:
-                    filtered_products.append(product)
-            except Exception as e:
-                print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
-                continue
-        return filtered_products
 
     def _generate_container_html(self, products):
         html_content = """
@@ -107,25 +62,45 @@ class ScrapingController:
             <div class="products">
             """
 
-        product_properties = self._gemini.get_responses_async(
-            "This is a product with some properties I am giving you: {}. You must return me each property"
-            "with its respective value, in the JSON format, nothing else", [product['text'] for product in products])
+        product_properties_filtered = self._gemini.get_responses_async(
+            "I have a list of some product's properties and values: {}. They got scrambled, and I can't tell if some "
+            "of them are property names (i.e. 'price', 'color') or values (i.e. '$55', 'red'), or combinations (i.e. "
+            "'price: $55' or 'color: red'). Return this exact list, but all property names removed. The remaining stuff"
+            " is to be kept intact, in the exact order. Say nothing else, just return the list",
+            [product['text'] for product in products],
+            temperature=0.3
+        )
 
-        for i in range(len(product_properties)):
-            product_properties[i] = json.loads(product_properties[i].strip('```'))
-        for product, props in zip(products, product_properties):
+        for i in range(len(products)):
+            products[i]['text'] = product_properties_filtered[i]
+
+        llm_product_property_responses = self._gemini.get_responses_async(
+            'This is a product with some properties I am giving you: {}. You must return me each property'
+            'with its respective value, in the JSON format, nothing else. I am another bot and must be able to read '
+            'your JSON without any extra efforts. If you can\'t, return 0 and nothing else',
+            [product['text'] for product in products],
+            temperature=0.3
+        )
+
+        product_properties_json = []
+        for curr_product_properties in llm_product_property_responses:
+            try:
+                product_properties_json.append(json.loads(curr_product_properties.strip('```')))
+            except ValueError as error:
+                print(f"\u001b[33mWarning: jsonifying {curr_product_properties} yielded \"{error}\"\u001b[0m")
+        for product, props in zip(products, product_properties_json):
             try:
                 product_block = f"""
                     <div class="product">
                         <a href="{product['href']}" target="_blank">
                             <img src="{product['img']}" alt="{product['text']}">
-                            {''.join(['<p>' + key.capitalize() + ': ' + value + '</p>' for key, value in props.items()])}
+                            {''.join(['<p>' + key.capitalize() + ': ' + str(value) + '</p>' for key, value in props.items()])}
                         </a>
                     </div>
                     """
+                html_content += product_block
             except Exception as e:
-                print(e)
-            html_content += product_block
+                print(f"\u001b[31mException while generating new HTML: {e}\u001b[0m")
 
         html_content += """
                 </div>
@@ -173,7 +148,7 @@ class ScrapingController:
                        f"number between 1 to 5, NOTHING else")
             response = self._gemini.get_response(request)
             print(i, element['text'], response)
-            if not '1' <= response <= '5' or len(response) > 1:
+            if not '1' <= response < '6' or len(response) > 1:
                 print(f"\u001b[31mWARNING! BAD RESPONSE: {response}")
                 continue
 
@@ -190,21 +165,34 @@ class ScrapingController:
                         """
         return html_content
 
-    def get_parsed_website_html(self, website, search_query, threshold=4):
+    def get_parsed_website_html(self, website, search_query, threshold=3):
         try:
-            marketplace_likelihood = self._gpt.get_response(
+            marketplace_likelihoods = self._gpt.get_responses_async(
                 f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
-                f'likelihood from 1 to 5, and output nothing other than the number')
+                f'likelihood from 1 to 5, and output nothing other than the number', [{}] * 5)
 
-            if marketplace_likelihood >= '4':
+            for marketplace_likelihood in marketplace_likelihoods:
+                if not '1' <= str(marketplace_likelihood) <= '5':
+                    marketplace_likelihoods.remove(marketplace_likelihood)
+
+            try:
+                for i in range(len(marketplace_likelihoods)):
+                    marketplace_likelihoods[i] = int(marketplace_likelihoods[i])
+            except Exception as e:
+                print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
+
+            if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
+                crawler = Crawler(self._gpt)
                 parser = Parser(website['url'], html=website['html'])
                 product_groups = parser.find_container_groups(website['url'])
-                filtered_products = self._filter_marketplace_products(product_groups, search_query)
+                filtered_products = crawler.filter_marketplace_products(product_groups, search_query,
+                                                                        threshold=threshold)
                 return self._generate_container_html(filtered_products)
 
             else:
                 crawler = Crawler(self._gpt)
-                crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold, lang=website.get('lang', 'english'))
+                crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold,
+                                                                 lang=website.get('lang', 'english'))
 
                 print('crawled page URL:', crawled_page['url'])
                 crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'])
@@ -222,16 +210,24 @@ class ScrapingController:
 
 
 def main():
+    url = 'https://www.truecar.com/used-cars-for-sale/listings/honda/price-below-6000/'
+
     scraping_controller = ScrapingController()
-    with open('compression/test_input.html', encoding='utf-8') as file:
-        products_html = file.read()
+    options = Options()
+    options.add_argument('--headless=new')
+    options.add_argument("window-size=19200,10800")
+    options.add_argument('--disable-browser-side-navigation')
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
+    source_html = driver.page_source
+
     print(scraping_controller.get_parsed_website_html(
         {
-            'url': 'https://www.facebook.com/marketplace/109175822435667/vehicles?maxPrice=7500&maxMileage=150000&exact=false',
-            'html': products_html,
+            'url': url,
+            'html': source_html,
             'lang': 'english'
         },
-        'Reliable Japanese car under 5000 USD and 140K miles',
+        'Used Honda sedan under 5000 usd and less than 130k miles',
         threshold=3
     ))
 
