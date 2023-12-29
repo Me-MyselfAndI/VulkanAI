@@ -12,7 +12,8 @@ import yaml
 
 
 class GeminiEngine:
-    def __init__(self, api_key=None, temperature=0.5):
+    def __init__(self, api_key=None, temperature=0.5, verbose=0):
+        self.verbose = verbose
         if api_key is None:
             with open(r'keys\keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gemini-api']
@@ -58,7 +59,8 @@ class GeminiEngine:
                     img = requests.get(url)
                     request.append(PIL.Image.open(BytesIO(img.content)))
         except Exception as error:
-            print(f"\u001b[33mWarning: image processing issue encountered for image {url}. Error: {error}\u001b[0m")
+            if self.verbose >= 1:
+                print(f"\u001b[33mWarning: image processing issue encountered for image {url}. Error: {error}\u001b[0m")
             return "1"
         try:
             response = model.generate_content(request, generation_config=generation_config)
@@ -69,20 +71,22 @@ class GeminiEngine:
                     response = model.generate_content(request, generation_config=generation_config)
                     return response.text.strip()
                 except Exception as error:
-                    print(f'\u001b[33mWarning: Gemini failed to respond:  {error}\n\tRequest:  {request}\u001b[0m')
+                    if self.verbose >= 1:
+                        print(f'\u001b[33mWarning: Gemini failed to respond:  {error}\n\tRequest:  {request}\u001b[0m')
                     return "1"
 
-        return response.text.strip()
+        return response.text.strip().strip('\n')
 
-    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=50, temperature=None, use_cheap_model=False):
-        if use_cheap_model:
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=50, temperature=None,
+                            use_cheap_model=False):
+        if use_cheap_model and self.verbose >= 0:
             print("\u001b[33mWarning! Cheap models not supported on Gemini. Defaulting to normal model")
         results = []
         if image_urls and (len(args) in (0, len(image_urls))):
             use_images = True
         else:
             use_images = False
-            if image_urls:
+            if image_urls and self.verbose >= 0:
                 print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping images!")
 
         with ThreadPoolExecutor() as executor:
@@ -103,11 +107,12 @@ class GeminiEngine:
                     )
 
                 sleep(0.02)  # Required to wait to avoid overloading the server
-                print(f'\u001b[32mBatch {i}:\u001b[0m')
-                for j, product in enumerate(curr_batch):
-                    print('\n\tPrompt', product)
-                    if use_images:
-                        print('\tImages', batch_images[j])
+                if self.verbose >= 2:
+                    print(f'\u001b[32mBatch {i}:\u001b[0m')
+                    for j, product in enumerate(curr_batch):
+                        print('\n\tPrompt', product)
+                        if use_images:
+                            print('\tImages', batch_images[j])
 
             # Retrieve results from futures
             for future in futures:
@@ -116,7 +121,8 @@ class GeminiEngine:
                 except TimeoutError:
                     result = 0, f"Timeout happened - Gemini couldn't return an answer in {timeout} seconds"
                 except Exception as e:
-                    print(f"\u001b[31mAnother error encountered when waiting for response from Gemini: {e}\u001b[0m")
+                    if self.verbose >= 0:
+                        print(f"\u001b[31mAnother error encountered when waiting for response from Gemini: {e}\u001b[0m")
                 results.append(result)
 
         return results
