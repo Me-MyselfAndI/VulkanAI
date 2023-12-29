@@ -18,6 +18,7 @@ with open(r'keys\keys.yaml') as keys_file:
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
 result_file = open("ui/templates/result.html", 'w')#Clean results file
+searching_type = "speed"
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
@@ -32,97 +33,79 @@ def go_to():
 
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
-    formattedSearch = ""
-    result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
-
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
+    formatted_search = ""
+    result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
     if request.method == "POST" and result_file.read() == "":
+        #Format and get the data
         received_data = request.get_json()
-        print(f"Received Data: {received_data['data']}")
+        print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
-        formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(f"Formatted Search: {formattedSearch}")
+        formatted_search = gpt_engine.get_response(
+            "Reformat this text into a searchable query: " + str(received_data["data"]))
+        print(f"Formatted Search: {formatted_search}")
 
         # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
-        search_engine.update_links(formattedSearch.strip("\""), search_website=received_data['pref-website'], start_entry=0)
-        # Open link (default opens 0th link, otherwise use link_number argument)
-        page = search_engine.get_first_website()
-        #Get page url
-        website_url = page["url"]
-        #If user has a prefered website to search on, use that website
-        if received_data['pref-website'] == "":
-            print("No prefered website")
-        else:
-            website_url = received_data['pref-website']
-        print(website_url)
-        website = {
-             'url': website_url,
-             'html': page["html"]
-        }
-        print(scraping_controller.get_parsed_website_html(website, formattedSearch))
-        #Save HTML ---------------------------------------------------------------
-        with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-            file.write(str(scraping_controller.get_parsed_website_html(website, formattedSearch)))
-            print("Saved")
+        search_engine.update_links(formatted_search.strip("\""), start_entry=0)
 
-        #Add Overlay button which allows users to go back on page
-        #Might not be neccessary right now cause we putting all of the results in template
-        cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">'
-        scriptLink = "<script src='../static/redirect.js'></script>\n"
-        headTag = '<head>'
-        bodyTag = '<body>'
-        endBodyTag = '</body>'
-        backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
-        slider = '<div id="slider-container"><input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/><p class="num" id="start">0</p><p class="num" id="one">1</p><p class="num" id="mid">2</p><p class="num" id="three">3</p><p class="num" id="end">4</p></div>'
-        content = open("ui/templates/result.html", "r", encoding="utf-8").read()#Get current content of the html file to change it
+        # Get all of the related links and show them to the user
+        links_list = search_engine.get_urls_by_indices()
+        print(links_list)
 
-        with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
-            #Add link to button css file
-            if headTag in content:
-                addPos = len(headTag)
-                pos = content.index(headTag) + addPos
-                content = content[:pos] + cssLink + content[pos:]
-            # Add slider
-            if bodyTag in content:
-                addPos = len(bodyTag)
-                pos = content.index(bodyTag) + addPos
-                content = content[:pos] + slider + content[pos:]
-            # Add button itself
-            if bodyTag in content:
-                addPos = len(bodyTag)
-                pos = content.index(bodyTag) + addPos
-                content = content[:pos] + backButton + content[pos:]
-            # Add script to redirect user back to search
-            if endBodyTag in content:
-                pos = content.index(endBodyTag)
-                content = content[:pos] + scriptLink + content[pos:]
-            result_file.write(content)
-        print("Added overlay")
-        #Transfer template to final result file and start transfering important data into the template
-        template = ""
-        """with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
-            template = template_file.read()
-        with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
-            result_file.write(template)
-            print(content)
-            for line in (line.strip("\n") for line in content):
-               if "h2" in line:
-                   print(line)"""
-        #Send success message so we can start reloade page to render new html
-        message = received_data['data']
-        return_data = {
-            "status": "success",
-            "message": f"received: {message}"
-        }
-        endpoint_url = "http://127.0.0.1:8000/views/search-result"
-        response = requests.post(endpoint_url, json=return_data)
-        if response.status_code == 200 or response.status_code == 201:
-            print("Sent data")
-        else:
-            print("Failed to send")
-        print("Redirected to go-to page")
-        return redirect(url_for("views.go_to"))
+        if searching_type == "basic":
+            print("Basic Search")
+
+        elif searching_type == "speed":
+            print("Speed Search")
+            # Open link (default opens 0th link, otherwise use link_number argument)
+            page = search_engine.get_first_website()
+            #Get page url
+            website_url = page["url"]
+            #If user has a prefered website to search on, use that website
+            if received_data['pref-website'] == "":
+                print("No prefered website")
+            else:
+                website_url = received_data['pref-website']
+            print(website_url)
+            website = {
+                 'url': website_url,
+                 'html': page["html"]
+            }
+
+            #Save HTML ---------------------------------------------------------------
+            with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+                file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
+                print("Saved")
+
+            #Add Overlay
+            add_overlay()
+
+            #Transfer template to final result file and start transfering important data into the template
+            template = ""
+            """with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
+                template = template_file.read()
+            with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
+                result_file.write(template)
+                print(content)
+                for line in (line.strip("\n") for line in content):
+                   if "h2" in line:
+                       print(line)"""
+
+            #Send success message so we can start reloade page to render new html
+            message = received_data['data']
+            return_data = {
+                "status": "success",
+                "message": f"received: {message}"
+            }
+            endpoint_url = "http://127.0.0.1:8000/views/search-result"
+            response = requests.post(endpoint_url, json=return_data)
+            if response.status_code == 200 or response.status_code == 201:
+                print("Sent data")
+            else:
+                print("Failed to send")
+            print("Redirected to go-to page")
+            return redirect(url_for("views.go_to"))
 
     #Safety check just in case tricky user tries to access page before it loads
     if result_file.read() == "":
@@ -151,6 +134,44 @@ def search_result():
             css_file.write(css_code[i])
         print("Saved CSS")
     """
+#HELPER FUNCTIONS
+@views.route("/add-overlay", methods=["POST", "GET", "PUT"])
+def add_overlay():
+    # Add Overlay button which allows users to go back on page
+    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">'
+    scriptLink = "<script src='../static/redirect.js'></script>\n"
+    headTag = '<head>'
+    bodyTag = '<body>'
+    endBodyTag = '</body>'
+    backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
+    slider = '<div id="slider-container"><input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/><p class="num" id="start">0</p><p class="num" id="one">1</p><p class="num" id="mid">2</p><p class="num" id="three">3</p><p class="num" id="end">4</p></div>'
+    content = open("ui/templates/result.html", "r",
+                   encoding="utf-8").read()  # Get current content of the html file to change it
+
+    with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
+        # Add link to button css file
+        if headTag in content:
+            addPos = len(headTag)
+            pos = content.index(headTag) + addPos
+            content = content[:pos] + cssLink + content[pos:]
+        # Add slider
+        if bodyTag in content:
+            addPos = len(bodyTag)
+            pos = content.index(bodyTag) + addPos
+            content = content[:pos] + slider + content[pos:]
+        # Add button itself
+        if bodyTag in content:
+            addPos = len(bodyTag)
+            pos = content.index(bodyTag) + addPos
+            content = content[:pos] + backButton + content[pos:]
+        # Add script to redirect user back to search
+        if endBodyTag in content:
+            pos = content.index(endBodyTag)
+            content = content[:pos] + scriptLink + content[pos:]
+        result_file.write(content)
+    print("Added overlay")
+
+
 
 #TESTING FUNCTIONS, CAN BE DELETED
 @views.route("/test", methods=["POST", "GET", "PUT"])
@@ -167,8 +188,8 @@ def format_search():
     if request.method == "POST":
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
-        formattedSearch = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(formattedSearch)
+        formatted_search = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
+        print(formatted_search)
     return render_template("index.html")
 
 
