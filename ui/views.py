@@ -55,6 +55,15 @@ def search_result():
 
         if searching_type == "basic":
             print("Basic Search")
+            # Save links in HTML ---------------------------------------------------------------
+            with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+                for link in links_list:
+                    file.write(link + '\n')
+
+
+
+            print("Redirected to go-to page")
+            return redirect(url_for("views.go_to"))
 
         elif searching_type == "speed":
             print("Speed Search")
