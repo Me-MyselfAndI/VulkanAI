@@ -18,7 +18,7 @@ with open(r'keys\keys.yaml') as keys_file:
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
 result_file = open("ui/templates/result.html", 'w')#Clean results file
-searching_type = "speed"
+searching_type = "basic"
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
@@ -56,10 +56,17 @@ def search_result():
         if searching_type == "basic":
             print("Basic Search")
             # Save links in HTML ---------------------------------------------------------------
+            content = open("ui/templates/result.html", "r",encoding="utf-8").read()
+            mainDiv = "<div id='maincontent'>"
+            list = "<ul>"
             with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-                for link in links_list:
-                    file.write(link + '\n')
-
+                file.write(content)
+                if mainDiv in content:
+                    for link in links_list:
+                        file.write(link + '\n')
+                    addPos = len(list)
+                    pos = content.index(list) + addPos
+                    content = content[:pos] + cssLink + content[pos:]
 
 
             print("Redirected to go-to page")
