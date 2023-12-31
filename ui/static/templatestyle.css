@@ -226,3 +226,7 @@ input[type=range]::-moz-range-thumb:active {
   cursor: -moz-grabbing;
 }
 
+li {
+  font-size: 25px;
+  margin: 3%;
+}

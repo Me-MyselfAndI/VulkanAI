@@ -56,17 +56,20 @@ def search_result():
         if searching_type == "basic":
             print("Basic Search")
             # Save links in HTML ---------------------------------------------------------------
-            content = open("ui/templates/result.html", "r",encoding="utf-8").read()
-            mainDiv = "<div id='maincontent'>"
+            content = open("ui/templates/template.html", "r",encoding="utf-8").read()
             list = "<ul>"
+            mainDiv = "<div id='maincontent'>"
             with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-                file.write(content)
                 if mainDiv in content:
+                    addPos = len(mainDiv)
+                    pos = content.index(mainDiv) + addPos
+                    content = content[:pos] + "<h2>" + formatted_search + "</h2>" + content[pos:]
+                if list in content:
                     for link in links_list:
-                        file.write(link + '\n')
-                    addPos = len(list)
-                    pos = content.index(list) + addPos
-                    content = content[:pos] + cssLink + content[pos:]
+                        addPos = len(list)
+                        pos = content.index(list) + addPos
+                        content = content[:pos] + f"<li><a href='{link}'>" + link + "</a></li>" + content[pos:]
+                file.write(content)
 
 
             print("Redirected to go-to page")
