@@ -9,7 +9,8 @@ import yaml
 
 
 class AsticaEngine:
-    def __init__(self, api_key=None, timeout=200):
+    def __init__(self, api_key=None, timeout=200, verbose=0):
+        self.verbose = verbose
         if api_key is None:
             with open(r'keys\keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['astica-api']
@@ -49,15 +50,17 @@ class AsticaEngine:
                 )
 
                 sleep(0.02)  # Required wait to avoid overloading the server
-                print(f'\u001b[32mAstica: batch {i}:\u001b[0m')
-                for j, image in enumerate(curr_batch):
-                    print('\n\t', j, image)
+                if self.verbose >= 2:
+                    print(f'\u001b[32mAstica: batch {i}:\u001b[0m')
+                    for j, image in enumerate(curr_batch):
+                        print('\n\t', j, image)
 
                 # Retrieve results from futures
                 for j, future in enumerate(futures):
                     try:
                         result = future.result(timeout=timeout)
-                        print(f'Astica, batch {i}, image {j} - received result: {result}')
+                        if self.verbose >= 2:
+                            print(f'Astica, batch {i}, image {j} - received result: {result}')
                     except TimeoutError:
                         result = 0, f"Timeout happened - Astica couldn't return an answer in {timeout} seconds"
                     results.append(result)

@@ -8,10 +8,12 @@ import yaml
 
 
 class GPTEngine:
-    def __init__(self, api_key=None, org_url=None):
+    def __init__(self, api_key=None, org_url=None, verbose=0):
+        self.verbose = verbose
         if (api_key is None) != (org_url is None):
-            print('\u001b[31mOne of the keys for gpt was default while other was provided.'
-                  'Either provide both GPT keys, or use both default')
+            if self.verbose >= 0:
+                print('\u001b[31mOne of the keys for gpt was default while other was provided.'
+                      'Either provide both GPT keys, or use both default')
             return
 
         if api_key is None:
@@ -42,7 +44,8 @@ class GPTEngine:
                 for url in image_urls
             ]
             if use_cheap_model:
-                print("\u001b[33mWarning! GPT 3.5 doesn't support images! Defaulting to non-image request\u001b[0m")
+                if self.verbose >= 0:
+                    print("\u001b[33mWarning! GPT 3.5 doesn't support images! Defaulting to non-image request\u001b[0m")
                 image_requests = []
                 model = self.cheap_model
 
@@ -64,12 +67,14 @@ class GPTEngine:
                 messages=full_request
             )
         except openai.BadRequestError as error:
-            print(f'\u001b[33mWarning Raised by GPT:  {error}\n\tRequest:  {full_request}\u001b[0m')
+            if self.verbose >= 1:
+                print(f'\u001b[33mWarning Raised by GPT:  {error}\n\tRequest:  {full_request}\u001b[0m')
             if error.code not in ['content_policy_violation', 'invalid_image_format']:
                 raise Exception(error)
             return "1"
 
-        return response.choices[0].message.content
+        result = response.choices[0].message.content
+        return result.strip().strip('\n')
 
     def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=5, use_cheap_model=False):
         results = []
@@ -78,7 +83,9 @@ class GPTEngine:
         else:
             use_images = False
             if image_urls:
-                print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping images!\u001b[0m")
+                if self.verbose >= 0:
+                    print("\u001b[33mWarning! Set of images doesn't correspond to the set of arguments! Skipping "
+                          "images!\u001b[0m")
 
         with ThreadPoolExecutor() as executor:
             futures = []
@@ -97,11 +104,13 @@ class GPTEngine:
                     )
 
                 sleep(0.02)  # Required to wait to avoid overloading the server
-                print(f'\u001b[32mBatch {i}:\u001b[0m')
-                for j, product in enumerate(curr_batch):
-                    print('\n\tPrompt', product)
-                    if use_images:
-                        print('\tImages', batch_images[j])
+
+                if self.verbose >= 2:
+                    print(f'\u001b[32mBatch {i}:\u001b[0m')
+                    for j, product in enumerate(curr_batch):
+                        print('\n\tPrompt', product)
+                        if use_images:
+                            print('\tImages', batch_images[j])
 
             # Retrieve results from futures
             for future in futures:

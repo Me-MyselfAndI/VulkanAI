@@ -30,7 +30,7 @@ class ScrapingController:
 
 
 
-    def _generate_container_html(self, products):
+    def _generate_container_html(self, products, verbose=0):
         html_content = """
             <!DOCTYPE html>
             <html lang="en">
@@ -87,7 +87,8 @@ class ScrapingController:
             try:
                 product_properties_json.append(json.loads(curr_product_properties.strip('```')))
             except ValueError as error:
-                print(f"\u001b[33mWarning: jsonifying {curr_product_properties} yielded \"{error}\"\u001b[0m")
+                if verbose >= 1:
+                    print(f"\u001b[33mWarning: jsonifying {curr_product_properties} yielded \"{error}\"\u001b[0m")
         for product, props in zip(products, product_properties_json):
             try:
                 product_block = f"""
@@ -110,7 +111,7 @@ class ScrapingController:
 
         return html_content
 
-    def _generate_text_wesite_html(self, parsed_content, search_query, threshold=3):
+    def _generate_text_wesite_html(self, parsed_content, search_query, threshold=3, verbose=0):
         html_content = """
                         <!DOCTYPE html>
                         <html lang="en">
@@ -147,9 +148,11 @@ class ScrapingController:
                        f"what the query '{search_query}' is searching for? Make sure the response only consists of a "
                        f"number between 1 to 5, NOTHING else")
             response = self._gemini.get_response(request)
-            print(i, element['text'], response)
+            if verbose >= 2:
+                print(i, element['text'], response)
             if not '1' <= response < '6' or len(response) > 1:
-                print(f"\u001b[31mWARNING! BAD RESPONSE: {response}")
+                if verbose >= 1:
+                    print(f"\u001b[31mWARNING! BAD RESPONSE: {response}")
                 continue
 
             if int(response) >= threshold:
@@ -165,7 +168,7 @@ class ScrapingController:
                         """
         return html_content
 
-    def get_parsed_website_html(self, website, search_query, threshold=3):
+    def get_parsed_website_html(self, website, search_query, threshold=3, verbose=0):
         try:
             marketplace_likelihoods = self._gpt.get_responses_async(
                 f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
@@ -179,28 +182,31 @@ class ScrapingController:
                 for i in range(len(marketplace_likelihoods)):
                     marketplace_likelihoods[i] = int(marketplace_likelihoods[i])
             except Exception as e:
-                print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
+                if verbose >= 1:
+                    print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._gpt)
-                parser = Parser(website['url'], html=website['html'])
+                crawler = Crawler(self._gpt, verbose=verbose)
+                parser = Parser(website['url'], html=website['html'], verbose=verbose)
                 product_groups = parser.find_container_groups(website['url'])
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query,
                                                                         threshold=threshold)
-                return self._generate_container_html(filtered_products)
+                return self._generate_container_html(filtered_products, verbose=verbose)
 
             else:
-                crawler = Crawler(self._gpt)
+                crawler = Crawler(self._gpt, verbose=verbose)
                 crawled_page = crawler.navigate_to_relevant_page(search_query, website, threshold=threshold,
                                                                  lang=website.get('lang', 'english'))
 
-                print('crawled page URL:', crawled_page['url'])
-                crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'])
+                if verbose >= 2:
+                    print('crawled page URL:', crawled_page['url'])
+                crawled_page_parser = Parser(crawled_page['url'], html=crawled_page['html'], verbose=verbose)
                 parsed_content = crawled_page_parser.find_text_content()
 
                 return {
                     'status': 'ok',
-                    'response': self._generate_text_wesite_html(parsed_content, search_query, threshold=threshold)
+                    'response': self._generate_text_wesite_html(parsed_content, search_query, threshold=threshold,
+                                                                verbose=verbose)
                 }
         except Exception as e:
             return {
@@ -210,7 +216,7 @@ class ScrapingController:
 
 
 def main():
-    url = 'https://www.truecar.com/used-cars-for-sale/listings/honda/price-below-6000/'
+    url = 'https://gbpi.org/georgia-education-budget-primer-for-state-fiscal-year-2024/#:~:text=Analyst%20Ashley%20Young.-,Georgia%27s%202024%20Education%20Budget,%241.2%20billion%20from%20FY%202023.'
 
     scraping_controller = ScrapingController()
     options = Options()
@@ -221,15 +227,17 @@ def main():
     driver.get(url)
     source_html = driver.page_source
 
-    print(scraping_controller.get_parsed_website_html(
+
+    result = scraping_controller.get_parsed_website_html(
         {
             'url': url,
             'html': source_html,
             'lang': 'english'
         },
-        'Used Honda sedan under 5000 usd and less than 130k miles',
+        'How does education budget in GA in 2023 compare to previous year?',
         threshold=3
-    ))
+    )
+    print(result['response'])
 
 
 if __name__ == '__main__':
