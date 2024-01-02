@@ -5,16 +5,18 @@ import math
 import re
 from urllib.parse import urljoin
 
+
 def _sigmoid(x, multiplier):
     return 1 / (1 + math.exp(-x * multiplier))
 
 
-def _find_deep_siblings(element, N, include_self=True):
+def _find_deep_siblings(element, N, include_self=True, verbose=0):
     parent = element
     for i in range(N):
         parent = parent.parent
         if parent is None:
-            print("Reached bedrock while finding close siblings")
+            if verbose >= 1:
+                print("Reached bedrock while finding close siblings")
             assert False
 
     siblings = set(parent)
@@ -54,7 +56,8 @@ class Parser:
         1.0: ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'a', 'span', 'button', 'code'],
         0.7: ['ul', 'ol']
     }
-    def __init__(self, url, html=None, soup=None):
+
+    def __init__(self, url, html=None, soup=None, verbose=0):
         self.url = url
         if html is not None:
             self.soup = BeautifulSoup(html, 'html.parser')
@@ -65,15 +68,19 @@ class Parser:
             print("\u001b[31mERROR: WRONG INITIALIZATION OF PARSER")
             assert False
 
+        self.verbose = verbose
+
     def find_container_groups(self, base_url, min_outer_steps_text=10, min_stop_element_count=50):
         if self.soup is None:
-            print("\u001b[31mERROR: PARSER UNINITIALIZED")
+            if self.verbose >= 0:
+                print("\u001b[31mERROR: PARSER UNINITIALIZED")
             assert False
 
         images = self.soup.find_all('img')
         products = []
         for image in images:
-            print(image)
+            if self.verbose >= 2:
+                print(image)
             curr_parent = image
 
             while True:
@@ -93,7 +100,9 @@ class Parser:
         products_to_delete = set()
         for i in range(len(products)):
             for j in range(i):
-                if products[i]['parent'] == products[j]['parent'] or products[i]['parent'] in products[j]['parent'].descendants and products[i]['text'] == products[j]['text'] or products[i]['href'] == products[j]['href']:
+                if products[i]['parent'] == products[j]['parent'] or products[i]['parent'] in products[j][
+                    'parent'].descendants and products[i]['text'] == products[j]['text'] or products[i]['href'] == \
+                        products[j]['href']:
                     products_to_delete.add(j)
                 elif products[j]['parent'] in products[i]['parent'].descendants:
                     products_to_delete.add(i)
@@ -130,12 +139,15 @@ class Parser:
         for i in sorted(list(products_to_delete), key=lambda x: -x):
             products.pop(i)
 
-        print("Number of products: ", len(products))
+        if self.verbose >= 2:
+            print("Number of products: ", len(products))
         return products
 
-    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7, max_link_search_depth=5):
+    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
+                          max_link_search_depth=5):
         if self.soup is None:
-            print("\u001b[31mERROR: PARSER UNINITIALIZED")
+            if self.verbose >= 0:
+                print("\u001b[31mERROR: PARSER UNINITIALIZED")
             assert False
 
         def remove_same_ancestors(menu_items):
@@ -153,7 +165,7 @@ class Parser:
                         continue
                     if indices.issubset(key):
                         popped = menu_items.pop(ancestor_cleaning_dict.get(key, None), None)
-                        if popped is None:
+                        if popped is None and self.verbose >= 1:
                             print('\u001b[33mWarning: Intersecting menu items possibly detected!\u001b[0m')
 
         def calculate_likelihood_score(element):

@@ -21,7 +21,8 @@ sys.path.append(vulkanai_dir)
 
 
 class Crawler:
-    def __init__(self, llm_engine):
+    def __init__(self, llm_engine, verbose=0):
+        self.verbose = verbose
         self.llm_engine = llm_engine
         options = Options()
         options.add_argument("window-size=19200,10800")
@@ -55,9 +56,10 @@ class Crawler:
 
     def filter_marketplace_products(self, product_info, search_query, threshold=3):
         self.handle_popup_alert(search_query)
-        print(f"Products ({len(product_info)}):")
-        for i, product in enumerate(product_info):
-            print(i, product)
+        if self.verbose >= 2:
+            print(f"Products ({len(product_info)}):")
+            for i, product in enumerate(product_info):
+                print(i, product)
 
         filtered_products = []
         nonempty_description_products = []
@@ -70,9 +72,10 @@ class Crawler:
                 continue
             nonempty_description_products.append(product)
 
-        print("Products with descriptions:")
-        for i, product in enumerate(nonempty_description_products):
-            print(i, product)
+        if self.verbose >= 2:
+            print("Products with descriptions:")
+            for i, product in enumerate(nonempty_description_products):
+                print(i, product)
 
         args, image_urls = [], []
         for product in nonempty_description_products:
@@ -84,22 +87,24 @@ class Crawler:
             prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str}"
                       f"Rate how much it fits. Answer 1-5, NUMBER ONLY, NOTHING ELSE")
             args.append(prompt)
-            # image_urls.append([product['img']])
         llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
                 if not '1' <= llm_response < '6':
-                    print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
+                    if self.verbose >= 1:
+                        print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
                     llm_response = 0
 
                 llm_response = int(llm_response[0])
-                print(product, llm_response, "\n")
+                if self.verbose >= 2:
+                    print(product, llm_response, "\n")
 
                 if llm_response >= threshold:
                     filtered_products.append(product)
             except Exception as e:
-                print(f'\u001b[31mException {e} encountered with this product; skipping\u001b[0m')
+                if self.verbose >= 1:
+                    print(f'\u001b[31mException "{e}" encountered with this product; skipping\u001b[0m')
                 continue
         return filtered_products
 
@@ -118,7 +123,8 @@ class Crawler:
 
         menu_items = parser.find_website_menu()
 
-        print('Navigating in menus')
+        if self.verbose >= 2:
+            print('Navigating in menus')
         menu_items_flattened = [
             {'item': item, 'text': item.get('text', '')} for ancestor in menu_items.values()
             for item in ancestor.get('items', [])
@@ -127,22 +133,26 @@ class Crawler:
         for i, eval in enumerate(llm_evaluations):
             menu_items_flattened[i]['score'] = eval
 
-        print(f'Total of {len(menu_items_flattened)} items before purging')
+        if self.verbose >= 2:
+            print(f'Total of {len(menu_items_flattened)} items before purging')
         menu_items_flattened = [
             item for item in menu_items_flattened
             if item['score'] >= threshold and item['item']['href']
         ]
 
-        print(f'Total of {len(menu_items_flattened)} items after purging')
+        if self.verbose >= 2:
+            print(f'Total of {len(menu_items_flattened)} items after purging')
 
         menu_items_flattened.sort(key=lambda x: -x['score'])
         # Navigate to the menu item that meets the relevance threshold
         for i, tag in enumerate(menu_items_flattened):
             item, score = tag.get('item'), tag.get('score')
-            print(item, score)
+            if self.verbose >= 2:
+                print(item, score)
             link = item.get('href', '')
             if not link:
-                print('NO LINK', item)
+                if self.verbose >= 2:
+                    print('NO LINK', item)
                 continue
 
             try:
@@ -169,9 +179,11 @@ class Crawler:
                     }
 
             except Exception as e:
-                print(f"\u001b[31mError processing {link}: {e}\u001b[0m")
+                if self.verbose >= 1:
+                    print(f"\u001b[31mError processing {link}: {e}\u001b[0m")
 
-        print('\u001b[31mReturned None - staying on the same page\u001b[0m')
+        if self.verbose >= 2:
+            print('\u001b[31mReturned None - staying on the same page\u001b[0m')
         return {
             'relevance': curr_page_relevance_rate,
             'url': website['url'],
@@ -189,7 +201,9 @@ class Crawler:
                 responses[i] = int(response)
             except Exception:
                 responses[i] = 0
-                print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
+
+                if self.verbose >= 1:
+                    print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
 
         return responses
 
@@ -204,7 +218,8 @@ class Crawler:
                 responses[i] = int(response)
             except Exception:
                 responses[i] = 0
-                print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
+                if self.verbose >= 1:
+                    print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
 
         return responses
 
