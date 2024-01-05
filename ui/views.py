@@ -18,12 +18,13 @@ with open(r'keys\keys.yaml') as keys_file:
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
 result_file = open("ui/templates/result.html", 'w')#Clean results file
-searching_type = "basic"
+searching_type = "speed"
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
     result_file = open("ui/templates/result.html", 'w')  # Clean results file
+    css_file = open("ui/static/result.css", 'w')  # Clean css file
     return render_template("index.html")
 
 @views.route("/go-to")
@@ -41,6 +42,8 @@ def search_result():
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
+        print(f"Search Method:  {received_data['search-type']}")
+        searching_type = received_data['search-type']
         formatted_search = gpt_engine.get_response(
             "Reformat this text into a searchable query: " + str(received_data["data"]))
         print(f"Formatted Search: {formatted_search}")
@@ -92,10 +95,21 @@ def search_result():
                  'html': page["html"]
             }
 
+            # Save CSS
+            css_code = page['css']
+            with open('ui/static/result.css', 'w') as css_file:
+                for i in range(len(css_code)):
+                    try:
+                        css_file.write(css_code[i])
+                    except:
+                        print("Error while writting a line")
+
+                print("Saved CSS")
+
             #Save HTML ---------------------------------------------------------------
             with open("ui/templates/result.html", "w", encoding="utf-8") as file:
                 file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
-                print("Saved")
+                print("Saved HTML")
 
             #Add Overlay
             add_overlay()
@@ -145,19 +159,12 @@ def search_result():
         return render_template_string(new_html)
     except:
         return render_template_string(page['html'])"""
-    """
-    #Save CSS
-    css_code = page['css']
-    with open('ui/static/result.css', 'w') as css_file:
-        for i in range(len(css_code)):
-            css_file.write(css_code[i])
-        print("Saved CSS")
-    """
+
 #HELPER FUNCTIONS
 @views.route("/add-overlay", methods=["POST", "GET", "PUT"])
 def add_overlay():
     # Add Overlay button which allows users to go back on page
-    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">'
+    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">\n<link href="../static/result.css" rel="stylesheet">'
     scriptLink = "<script src='../static/redirect.js'></script>\n"
     headTag = '<head>'
     bodyTag = '<body>'

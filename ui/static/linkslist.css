@@ -1,0 +1,88 @@
+#overlay-button {
+    position: fixed;
+    top: 3%;
+    left: 4%;
+    transform: translate(-50%, -50%);
+    z-index: 9999; /* Ensure it appears above other content */
+  }
+
+.button-style {
+  background-color: initial;
+  background-image: linear-gradient(-180deg, #FF7E31, #E62C03);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-family: Inter,-apple-system,system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+  height: 40px;
+  line-height: 40px;
+  outline: 0;
+  overflow: hidden;
+  padding: 0 20px;
+  pointer-events: auto;
+  position: relative;
+  text-align: center;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: top;
+  white-space: nowrap;
+  width: 100%;
+  z-index: 9;
+  border: 0;
+  transition: box-shadow .2s;
+}
+
+.button-42:hover {
+  box-shadow: rgba(253, 76, 0, 0.5) 0 3px 8px;
+}
+
+* {
+  color: white;
+  margin: auto;
+}
+
+body {
+  background-color: #1c1e21;
+}
+
+h1 {
+  margin-top: 3%;
+  text-align: center;
+  color: #FBB321;
+}
+
+h2 {
+  text-align: center;
+  color: #FBB321;
+}
+
+#maincontent {
+  border: 4px solid #FBB321;
+  margin: 5% 12%;
+  padding: 2%;
+  border-radius: 50px;
+  line-height: 38px;
+  font-size: large;
+}
+
+#prefis {
+  margin: 2% 0;
+  font-size: 21px;
+  text-align: center;
+}
+
+.solution {
+  border: 4px solid #ff7b4b;
+  border-radius: 15px;
+  margin: 2% 2%;
+  text-align: left;
+  padding: 2%;
+  font-size: 20px;
+}
+
+li {
+  font-size: 25px;
+  margin: 3%;
+}
