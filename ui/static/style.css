@@ -90,3 +90,8 @@ Limits the spread of everything, might be needed later
     margin-bottom: 3%;
   }
 
+  #search-type {
+    color: white;
+    margin: 0 auto;
+  }
+

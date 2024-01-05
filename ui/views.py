@@ -42,6 +42,8 @@ def search_result():
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
+        print(f"Search Method:  {received_data['search-type']}")
+        searching_type = received_data['search-type']
         formatted_search = gpt_engine.get_response(
             "Reformat this text into a searchable query: " + str(received_data["data"]))
         print(f"Formatted Search: {formatted_search}")
