@@ -71,7 +71,7 @@ def search_result():
                     for link in links_list:
                         addPos = len(list)
                         pos = content.index(list) + addPos
-                        content = content[:pos] + f"<li><a href='{link}'>" + link + "</a></li>" + content[pos:]
+                        content = content[:pos] + f"<li><a href='{link}' class='result-link'>" + link + "</a></li>" + content[pos:]
                 file.write(content)
 
 

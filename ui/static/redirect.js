@@ -124,6 +124,15 @@ inputRange.addEventListener('input', function() {
     }
 });
 
+//Refactor and render links
+$(document).on('click', '.result-link', function( event ) {
+   //alert( $(this).attr('class') )
+    console.log("Clicked link");
+   let clickedLink = $(this).attr('class').href;
+   console.log(clickedLink);
+});
+
+
 //Get titles from links
 // Replace 'url' with the URL of the webpage you want to get the title from
 const url = 'https://www.edmunds.com/used-infiniti/'; // Your server URL
