@@ -206,8 +206,9 @@ class GPTAssistantsEngine:
                         except Exception as error:
                             if self.verbose >= 1:
                                 print(f"\u001b[33mCannot extract ranking of {key}: the returned value was faulty {value}. Error: {error}")
+                            value = '0'
 
-                        results.append()
+                        results.append(value)
                     else:
                         results.append('0')
 
