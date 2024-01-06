@@ -45,32 +45,15 @@ class ScrapingController:
             return """
             <!DOCTYPE html>
             <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>VulkanAI - Filtered Products</title>
-                <style>
-                    .products {
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 20px;
-                        justify-content: center;
-                    }
-                    .product {
-                        border: 1px solid #ddd;
-                        padding: 10px;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                        width: 150px;
-                        text-align: center;
-                    }
-                    .product img {
-                        max-width: 100%;
-                        max-height: 100px;
-                    }
-                </style>
-            </head>
-            <body>
-            <div class="products">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>VulkanAI - Filtered Products</title>
+                </head>
+                <body>
+                    No satisfying products could be found. Try toggling the threshold bar to loosen your requirements, or visit with a different prompt
+                </body>
+            </html>
             """
 
         html_content = """
@@ -101,11 +84,6 @@ class ScrapingController:
                 </style>
             </head>
             <body>
-            <div class="products">
-            No satisfying products could be found. Try toggling the threshold bar to loosen your requirements, or visit with a different prompt
-            </div>
-            </body>
-            </html>
             """
 
         product_properties_filtered = self._gemini.get_responses_async(

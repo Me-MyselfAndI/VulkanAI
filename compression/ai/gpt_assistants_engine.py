@@ -60,9 +60,9 @@ class GPTAssistantsEngine:
         try:
             assistant = self.client.beta.assistants.create(
                 model=self.model,
-                instructions='You only answer in JSON where each item is matched with its response, formatted like '
-                             '{"item id": "response"}, not anything on top of that. You always include one answer for '
-                             'each item, and this answer must be a single number',
+                instructions='Match items with respective responses like'
+                             '{"item id": "response"}never anything else.Include exactly one answer per'
+                             ' item,always only numeric',
                 tools=[{'type': 'retrieval'}],
                 file_ids=[product_file['gpt-object'].id]
             )
@@ -172,7 +172,7 @@ class GPTAssistantsEngine:
 
         return response.strip().strip("```").strip('json').strip('\n')
 
-    def get_responses_async(self, prompt: str, args=(), batch_size=5, timeout=20):
+    def get_responses_async(self, prompt: str, args=(), batch_size=10, timeout=20):
         with ThreadPoolExecutor() as executor:
             futures = []
             batches = [
