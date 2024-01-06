@@ -18,12 +18,13 @@ with open(r'keys\keys.yaml') as keys_file:
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
 result_file = open("ui/templates/result.html", 'w')#Clean results file
-searching_type = "basic"
+searching_type = "speed"
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
     result_file = open("ui/templates/result.html", 'w')  # Clean results file
+    css_file = open("ui/static/result.css", 'w')  # Clean css file
     return render_template("index.html")
 
 @views.route("/go-to")
@@ -41,6 +42,8 @@ def search_result():
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
+        print(f"Search Method:  {received_data['search-type']}")
+        searching_type = received_data['search-type']
         formatted_search = gpt_engine.get_response(
             "Reformat this text into a searchable query: " + str(received_data["data"]))
         print(f"Formatted Search: {formatted_search}")
@@ -68,7 +71,7 @@ def search_result():
                     for link in links_list:
                         addPos = len(list)
                         pos = content.index(list) + addPos
-                        content = content[:pos] + f"<li><a href='{link}'>" + link + "</a></li>" + content[pos:]
+                        content = content[:pos] + f"<li><img src='{link['icon']}'><a href='{link['url']}' class='result-link'>" + link['title'] + "</a><br><p>" + link['url'] +"</p></li>" + content[pos:]
                 file.write(content)
 
 
@@ -79,50 +82,9 @@ def search_result():
             print("Speed Search")
             # Open link (default opens 0th link, otherwise use link_number argument)
             page = search_engine.get_first_website()
-            #Get page url
-            website_url = page["url"]
-            #If user has a prefered website to search on, use that website
-            if received_data['pref-website'] == "":
-                print("No prefered website")
-            else:
-                website_url = received_data['pref-website']
-            print(website_url)
-            website = {
-                 'url': website_url,
-                 'html': page["html"]
-            }
 
-            #Save HTML ---------------------------------------------------------------
-            with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-                file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
-                print("Saved")
+            parse_website(received_data, formatted_search, page)
 
-            #Add Overlay
-            add_overlay()
-
-            #Transfer template to final result file and start transfering important data into the template
-            template = ""
-            """with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
-                template = template_file.read()
-            with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
-                result_file.write(template)
-                print(content)
-                for line in (line.strip("\n") for line in content):
-                   if "h2" in line:
-                       print(line)"""
-
-            #Send success message so we can start reloade page to render new html
-            message = received_data['data']
-            return_data = {
-                "status": "success",
-                "message": f"received: {message}"
-            }
-            endpoint_url = "http://127.0.0.1:8000/views/search-result"
-            response = requests.post(endpoint_url, json=return_data)
-            if response.status_code == 200 or response.status_code == 201:
-                print("Sent data")
-            else:
-                print("Failed to send")
             print("Redirected to go-to page")
             return redirect(url_for("views.go_to"))
 
@@ -134,30 +96,58 @@ def search_result():
     print("Showing actual result")
     return render_template("result.html")
 
-    #Extra Code
-    """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
-    tag = '</head>'
-    if tag in page['html']:
-        add_pos = len(tag)
-        position = page['html'].index(tag) + add_pos
-        new_html = page['html'][:position] + css_link + page['html'][position:]
-    try:
-        return render_template_string(new_html)
-    except:
-        return render_template_string(page['html'])"""
-    """
-    #Save CSS
+#HELPER FUNCTIONS
+#Parse selected website and show user relevant information
+def parse_website(received_data: dict, formatted_search: str, page: dict):
+    # Get page url
+    website_url = page['url']
+    # If user has a prefered website to search on, use that website
+    if received_data['pref-website'] == "":
+        print("No prefered website")
+    else:
+        website_url = received_data['pref-website']
+    print(website_url)
+    website = {
+        'url': website_url,
+        'html': page["html"]
+    }
+
+    # Save CSS
     css_code = page['css']
     with open('ui/static/result.css', 'w') as css_file:
         for i in range(len(css_code)):
-            css_file.write(css_code[i])
+            try:
+                css_file.write(css_code[i])
+            except:
+                print("Error while writting a line")
+
         print("Saved CSS")
-    """
-#HELPER FUNCTIONS
-@views.route("/add-overlay", methods=["POST", "GET", "PUT"])
+
+    # Save HTML ---------------------------------------------------------------
+    with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+        file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
+        print("Saved HTML")
+
+    # Add Overlay
+    add_overlay()
+
+    # Send success message so we can start reload page to render new html
+    message = received_data['data']
+    return_data = {
+        "status": "success",
+        "message": f"received: {message}"
+    }
+    endpoint_url = "http://127.0.0.1:8000/views/search-result"
+    response = requests.post(endpoint_url, json=return_data)
+    if response.status_code == 200 or response.status_code == 201:
+        print("Sent data")
+    else:
+        print("Failed to send")
+
+#Add VulkanAI overlay with back button and slider
 def add_overlay():
     # Add Overlay button which allows users to go back on page
-    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">'
+    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">\n<link href="../static/result.css" rel="stylesheet">'
     scriptLink = "<script src='../static/redirect.js'></script>\n"
     headTag = '<head>'
     bodyTag = '<body>'
@@ -212,3 +202,25 @@ def format_search():
     return render_template("index.html")
 
 
+#Extra Code
+    """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
+    tag = '</head>'
+    if tag in page['html']:
+        add_pos = len(tag)
+        position = page['html'].index(tag) + add_pos
+        new_html = page['html'][:position] + css_link + page['html'][position:]
+    try:
+        return render_template_string(new_html)
+    except:
+        return render_template_string(page['html'])"""
+
+# Transfer template to final result file and start transfering important data into the template
+template = ""
+"""with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
+    template = template_file.read()
+with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
+    result_file.write(template)
+    print(content)
+    for line in (line.strip("\n") for line in content):
+       if "h2" in line:
+           print(line)"""

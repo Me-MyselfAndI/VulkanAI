@@ -5,32 +5,74 @@ from selenium.webdriver.chrome.options import Options
 
 from compression.ai.astica_engine import AsticaEngine
 from compression.ai.gemini_engine import GeminiEngine
+from compression.ai.gpt_assistants_engine import GPTAssistantsEngine
 from compression.ai.gpt_engine import GPTEngine
+from compression.ai.mistral_engine import MistralEngine
 
 from compression.scraping.crawler import Crawler
 from compression.scraping.parser import Parser
 
 
 class ScrapingController:
-    def __init__(self, gpt=None, astica=None, gemini=None):
+    def __init__(self, gpt=None, astica=None, gemini=None, mistral=None, gpt_assistants=None, verbose=0):
         if gpt is None:
-            self._gpt = GPTEngine()
+            self._gpt = GPTEngine(verbose=verbose)
         else:
             self._gpt = gpt
 
         if astica is None:
-            self._astica = AsticaEngine()
+            self._astica = AsticaEngine(verbose=verbose)
         else:
             self._astica = astica
 
         if gemini is None:
-            self._gemini = GeminiEngine()
+            self._gemini = GeminiEngine(verbose=verbose)
         else:
             self._gemini = gemini
 
+        if mistral is None:
+            self._mistral = MistralEngine(verbose=verbose)
+        else:
+            self._mistral = mistral
 
+        if gpt_assistants is None:
+            self._gpt_assistants = GPTAssistantsEngine(verbose=verbose)
+        else:
+            self._gpt_assistants = gpt_assistants
 
     def _generate_container_html(self, products, verbose=0):
+        if len(products) == 0:
+            return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>VulkanAI - Filtered Products</title>
+                <style>
+                    .products {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        justify-content: center;
+                    }
+                    .product {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        width: 150px;
+                        text-align: center;
+                    }
+                    .product img {
+                        max-width: 100%;
+                        max-height: 100px;
+                    }
+                </style>
+            </head>
+            <body>
+            <div class="products">
+            """
+
         html_content = """
             <!DOCTYPE html>
             <html lang="en">
@@ -60,6 +102,10 @@ class ScrapingController:
             </head>
             <body>
             <div class="products">
+            No satisfying products could be found. Try toggling the threshold bar to loosen your requirements, or visit with a different prompt
+            </div>
+            </body>
+            </html>
             """
 
         product_properties_filtered = self._gemini.get_responses_async(
@@ -186,12 +232,15 @@ class ScrapingController:
                     print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._gpt, verbose=verbose)
+                crawler = Crawler(self._gpt_assistants, verbose=verbose)
                 parser = Parser(website['url'], html=website['html'], verbose=verbose)
                 product_groups = parser.find_container_groups(website['url'])
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query,
                                                                         threshold=threshold)
-                return self._generate_container_html(filtered_products, verbose=verbose)
+                return {
+                    'status': 'ok',
+                    'response': self._generate_container_html(filtered_products, verbose=verbose)
+                }
 
             else:
                 crawler = Crawler(self._gpt, verbose=verbose)
@@ -216,9 +265,11 @@ class ScrapingController:
 
 
 def main():
-    url = 'https://gbpi.org/georgia-education-budget-primer-for-state-fiscal-year-2024/#:~:text=Analyst%20Ashley%20Young.-,Georgia%27s%202024%20Education%20Budget,%241.2%20billion%20from%20FY%202023.'
+    verbose = 1
 
-    scraping_controller = ScrapingController()
+    url = 'https://www.truecar.com/used-cars-for-sale/listings/honda/price-below-6000/'
+
+    scraping_controller = ScrapingController(verbose=verbose)
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument("window-size=19200,10800")
@@ -234,8 +285,9 @@ def main():
             'html': source_html,
             'lang': 'english'
         },
-        'How does education budget in GA in 2023 compare to previous year?',
-        threshold=3
+        'Used Japanese car under 4500 usd, 150000 mi',
+        threshold=3,
+        verbose=verbose
     )
     print(result['response'])
 

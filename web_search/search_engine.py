@@ -1,5 +1,6 @@
 import time
 from urllib.parse import urlparse, urljoin
+from urllib.request import urlopen
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -43,22 +44,27 @@ class SearchEngine:
         if 'organic_results' not in raw_search_results:
             print("\u001b[31mMISSING SEARCH RESULTS:", raw_search_results)
         for curr_raw_result in raw_search_results["organic_results"]:
-            results.append(curr_raw_result["link"])
+            results.append({
+                'url': curr_raw_result["link"],
+                'icon': curr_raw_result.get("favicon", None),
+                'title': curr_raw_result.get("title", None)
+            })
 
         self.last_search["res"] = results
         self.last_search["prompt"] = prompt
 
-    def get_urls_by_indices(self, first=0, last=25):
+    def get_urls_by_indices(self, first=0, last=25, get_logos=False):
         links = self.last_search['res']
         if not first <= last <= len(links):
             print(f"\u001b[33mBad arguments: requesting [{first, last}] pages while only {len(links)} are available")
+
         return links[first:last]
 
     def get_first_website(self):
         return self.get_website(0)
 
     def get_website(self, link_number):
-        website_url = self.last_search["res"][link_number]
+        website_url = self.last_search["res"][link_number]['url']
 
         self.driver.get(website_url)
         WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(By.XPATH, "//body/*")) > 0)
@@ -88,7 +94,7 @@ if __name__ == '__main__':
     search_engine = SearchEngine()
     # Use update-links method to refresh the search results (stored inside the class).
     # Start entry is 0 by default, it's the pagination offset
-    search_engine.update_links("Laptop under 1000 usd fast delivery", start_entry=0, search_website='facebook.com')
+    search_engine.update_links("Laptop under 1000 usd fast delivery", start_entry=0, search_website=None)
     # Open link (default opens 0th link, otherwise use link_number argument)
     page = search_engine.get_first_website()
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])

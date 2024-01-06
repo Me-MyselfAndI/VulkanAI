@@ -123,3 +123,11 @@ inputRange.addEventListener('input', function() {
         console.log("3 mods");
     }
 });
+
+//Refactor and render links
+$(document).on('click', '.result-link', function( event ) {
+   //alert( $(this).attr('class') )
+    console.log("Clicked link");
+   let clickedLink = $(this).attr('class').href;
+   console.log($(this));
+});

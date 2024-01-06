@@ -7,6 +7,9 @@ getXmlHttpRequestObject = function () {
     }
     return xhr;
 };
+
+let searchType = "speed";
+
 //Hide loader after page has loaded
 function hideLoader() {
     document.getElementById('loader').style.visibility = 'hidden';
@@ -38,6 +41,7 @@ function sendToNewPage() {
     }
 }
 
+//Send data to Python
 document.getElementById("search-button").addEventListener("click", function(event) {
     xhr = null;
 
@@ -45,13 +49,14 @@ document.getElementById("search-button").addEventListener("click", function(even
     let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
     console.log(inputValue);
     console.log(prefWebsite)
+    console.log(searchType)
 
     xhr = getXmlHttpRequestObject();
     xhr.onreadystatechange = sendToNewPage;
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
-    xhr.send(JSON.stringify({"data": inputValue, "pref-website": prefWebsite}));
+    xhr.send(JSON.stringify({"data": inputValue, "pref-website": prefWebsite, "search-type": searchType}));
 });
 
 //Make search bar grow in height as user keeps typing into it
@@ -87,3 +92,15 @@ $('textarea').on({
     }
 });
 
+//Send what type of search user is using
+$("#speed").click(function(){
+    if($('input[type=radio]:checked').length > 0){
+       searchType = "speed";
+    }
+})
+
+$("#basic").click(function(){
+    if($('input[type=radio]:checked').length > 0){
+       searchType = "basic";
+    }
+})
