@@ -231,3 +231,22 @@ input[type=range]::-webkit-slider-thumb:active {
 input[type=range]::-moz-range-thumb:active {
   cursor: -moz-grabbing;
 }
+
+img {
+  margin-right: 1%;
+  width: 30px;
+  height: 30px;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+p {
+  font-size: 16px;
+  color: #808080;
+}
