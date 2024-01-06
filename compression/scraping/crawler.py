@@ -13,14 +13,13 @@ chrome_options.add_argument("--headless=new")
 
 import sys
 import os
-
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
-capsolver_extension_path = current_dir + "/compression/CaptchaSolver/extension"
-chrome_driver_path = current_dir + "/compression/CaptchaSolver/chromedriver.exe"
+capsolver_extension_path = vulkanai_dir + "/compression/CaptchaSolver/extension"
+chrome_driver_path = vulkanai_dir + "/compression/CaptchaSolver/chromedriver.exe"
 chrome_service = Service(executable_path=chrome_driver_path)
 chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
 
