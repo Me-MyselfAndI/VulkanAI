@@ -41,6 +41,38 @@ class ScrapingController:
             self._gpt_assistants = gpt_assistants
 
     def _generate_container_html(self, products, verbose=0):
+        if len(products) == 0:
+            return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>VulkanAI - Filtered Products</title>
+                <style>
+                    .products {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        justify-content: center;
+                    }
+                    .product {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        width: 150px;
+                        text-align: center;
+                    }
+                    .product img {
+                        max-width: 100%;
+                        max-height: 100px;
+                    }
+                </style>
+            </head>
+            <body>
+            <div class="products">
+            """
+
         html_content = """
             <!DOCTYPE html>
             <html lang="en">
@@ -70,6 +102,10 @@ class ScrapingController:
             </head>
             <body>
             <div class="products">
+            No satisfying products could be found. Try toggling the threshold bar to loosen your requirements, or visit with a different prompt
+            </div>
+            </body>
+            </html>
             """
 
         product_properties_filtered = self._gemini.get_responses_async(
@@ -250,7 +286,7 @@ def main():
             'lang': 'english'
         },
         'Used Japanese car under 4500 usd, 150000 mi',
-        threshold=4,
+        threshold=3,
         verbose=verbose
     )
     print(result['response'])
