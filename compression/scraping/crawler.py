@@ -84,10 +84,13 @@ class Crawler:
                 product_str += property + ";"
             if len(product_str) > 0:
                 product_str = product_str[:-1] + ']'
-            prompt = (f"Customer is looking for '{search_query}'. They are considering {product_str}"
-                      f"Rate how much it fits. Answer 1-5, NUMBER ONLY, NOTHING ELSE")
-            args.append(prompt)
-        llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls)
+            args.append(product_str)
+        # llm_responses = self.llm_engine.get_responses_async('{}', args=args, image_urls=image_urls, max_tokens=2)
+        llm_responses = self.llm_engine.get_responses_async(f'Customer is looking for "{search_query}". For each'
+                                                            f' provided product, give a ranking from 1 to 5 '
+                                                            f'where 1 is a terrible match for the prompt'
+                                                            f' and 5 is a perfect match.',
+                                                            args=args)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
