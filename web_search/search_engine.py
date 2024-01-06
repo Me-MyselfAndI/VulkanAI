@@ -1,6 +1,4 @@
-import time
 from urllib.parse import urlparse, urljoin
-from urllib.request import urlopen
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -82,10 +80,23 @@ class SearchEngine:
                 css_response = requests.get(css_url)
                 if css_response.status_code == 200:
                     css_content.append(css_response.text)
+                else:
+                    return {
+                        'url': website_url,
+                        'title': self.last_search['res'][link_number]['title'],
+                        'icon': self.last_search['res'][link_number]['icon'],
+                        'error': f'The following code was returned: {css_response.status_code}'
+                    }
             except Exception as e:
                 print(f'\u001b[33mWarning! Exception happened: \n{e}\u001b[0m')
 
-        return {'html': soup.prettify(), 'css': css_content, 'url': website_url}
+        return {
+            'url': website_url,
+            'title': self.last_search["res"][link_number]['title'],
+            'icon': self.last_search["res"][link_number]['icon'],
+            'html': soup.prettify(),
+            'css': css_content
+        }
 
 
 # Use case:
@@ -94,7 +105,7 @@ if __name__ == '__main__':
     search_engine = SearchEngine()
     # Use update-links method to refresh the search results (stored inside the class).
     # Start entry is 0 by default, it's the pagination offset
-    search_engine.update_links("Laptop under 1000 usd fast delivery", start_entry=0, search_website=None)
+    search_engine.update_links("Japanese car under 6000 dollars and 130k miles", start_entry=0, search_website=None)
     # Open link (default opens 0th link, otherwise use link_number argument)
     page = search_engine.get_first_website()
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
