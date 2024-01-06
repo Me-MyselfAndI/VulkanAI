@@ -4,12 +4,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.chrome.service import Service
 from compression.scraping.parser import Parser
 
 chrome_options = Options()
 chrome_options.add_argument("--ignore-certificate-errors")
-chrome_options.add_argument("--headless")
+chrome_options.add_argument("--headless=new")
 
 import sys
 import os
@@ -19,15 +19,17 @@ parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
+capsolver_extension_path = current_dir + "/compression/CaptchaSolver/extension"
+chrome_driver_path = current_dir + "/compression/CaptchaSolver/chromedriver.exe"
+chrome_service = Service(executable_path=chrome_driver_path)
+chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
+
 
 class Crawler:
     def __init__(self, llm_engine, verbose=0):
         self.verbose = verbose
         self.llm_engine = llm_engine
-        options = Options()
-        options.add_argument("window-size=19200,10800")
-        options.add_argument('--headless=new')
-        self.driver = webdriver.Chrome(options=options)
+        self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
     def get_page_source(self, url):
         self.driver.get(url)
