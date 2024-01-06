@@ -124,15 +124,10 @@ inputRange.addEventListener('input', function() {
     }
 });
 
-//Get titles from links
-// Replace 'url' with the URL of the webpage you want to get the title from
-const url = 'https://www.edmunds.com/used-infiniti/'; // Your server URL
-fetch(url)
-  .then(response => response.text())
-  .then(data => {
-    // Process the fetched data
-    console.log('Fetched data:', data);
-  })
-  .catch(error => {
-    console.error('Error fetching data:', error);
-  });
+//Refactor and render links
+$(document).on('click', '.result-link', function( event ) {
+   //alert( $(this).attr('class') )
+    console.log("Clicked link");
+   let clickedLink = $(this).attr('class').href;
+   console.log($(this));
+});
