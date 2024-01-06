@@ -1,5 +1,4 @@
 import math
-from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
