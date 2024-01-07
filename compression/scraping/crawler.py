@@ -18,8 +18,8 @@ parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
-capsolver_extension_path = vulkanai_dir + "/compression/CaptchaSolver/extension"
-chrome_driver_path = vulkanai_dir + "/compression/CaptchaSolver/chromedriver.exe"
+capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension"
+chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe"
 chrome_service = Service(executable_path=chrome_driver_path)
 chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
 
@@ -88,8 +88,8 @@ class Crawler:
             args.append(product_str)
 
         llm_responses = self.llm_engine.get_responses_async(
-            f'Customer looking for"{search_query}".Rank every'
-            f' product, from 1(terrible match for prompt) to 5 (perfect match)',
+            f'Customer looking for"{search_query}".Rank product "{{}}"'
+            f', from 1(terrible match for request) to 5(perfect match). ONLY NUMBER NO TEXT AT ALL',
             args=args
         )
 

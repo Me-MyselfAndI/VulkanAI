@@ -210,7 +210,7 @@ class ScrapingController:
                     print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._gpt_assistants, verbose=verbose)
+                crawler = Crawler(self._gpt, verbose=verbose)
                 parser = Parser(website['url'], html=website['html'], verbose=verbose)
                 product_groups = parser.find_container_groups(website['url'])
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query,
@@ -243,7 +243,7 @@ class ScrapingController:
 
 
 def main():
-    verbose = 1
+    verbose = 2
 
     url = 'https://www.truecar.com/used-cars-for-sale/listings/honda/price-below-6000/'
 

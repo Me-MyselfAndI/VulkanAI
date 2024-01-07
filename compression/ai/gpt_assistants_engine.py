@@ -195,10 +195,16 @@ class GPTAssistantsEngine:
             for i in range(math.ceil(len(args) / batch_size)):
                 try:
                     response = futures[i].result(timeout=timeout)
+                    try:
+                        json_response = json.loads(response)
+                    except Exception as error:
+                        print(f"\u001b[31mWarning! GPT Assistant failed to return a JSON response. Response: {response}\nError: {error}\u001b[0m")
+                        json_response = {}
+
                 except TimeoutError:
                     response = 0, f"Timeout happened - GPT couldn't return an answer in {timeout} seconds"
+                    json_response = {}
 
-                json_response = json.loads(response)
                 for key in range(len(batches[i])):
                     if str(key) in json_response:
                         try:
