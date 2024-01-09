@@ -1,3 +1,13 @@
+//Request to call python functions
+let xhr = null;
+getXmlHttpRequestObject = function () {
+    if (!xhr) {
+        // Create a new XMLHttpRequest object
+        xhr = new XMLHttpRequest();
+    }
+    return xhr;
+};
+
 function redirectToSearch() {
     console.log("Back to Search");
     window.location.href = "http://127.0.0.1:8000/views/";
@@ -124,10 +134,42 @@ inputRange.addEventListener('input', function() {
     }
 });
 
+//Hide loader after page has loaded
+function hideLoader() {
+    document.getElementById('loader').style.visibility = 'hidden';
+}
+//Show loading animation after searching and while page is loading
+showLoader = function(e) {
+    document.getElementById('loader').style.visibility = 'visible';
+}
+
+//Move user search result page
+function sendToNewPage() {
+    console.log("Sending user to new page");
+    showLoader()
+    // Check response is ready or not
+    if (xhr.readyState === 4 || xhr.status === 201) {
+        window.location.href = "http://127.0.0.1:8000/views/search-result";
+        console.log("Received data");
+        console.log(xhr.responseText);
+
+    }
+}
+
 //Refactor and render links
-$(document).on('click', '.result-link', function( event ) {
-   //alert( $(this).attr('class') )
-    console.log("Clicked link");
-   let clickedLink = $(this).attr('class').href;
-   console.log($(this));
-});
+let result_links = document.getElementsByClassName('result-link');
+for (var i = 0; i < result_links.length; i++) {
+    result_links[i].addEventListener('click', function(event) {
+    // prevent navigating to a new page
+    event.preventDefault();
+    let clickedLink = this.href;
+    console.log('Clicked on: ' + clickedLink);
+
+    xhr = getXmlHttpRequestObject();
+    xhr.onreadystatechange = sendToNewPage;
+
+    // if (clickedLink === 'youtube.come') {
+    //
+    // }
+  });
+}
