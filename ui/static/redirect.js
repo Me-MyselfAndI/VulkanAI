@@ -149,7 +149,7 @@ function sendToNewPage() {
     showLoader()
     // Check response is ready or not
     if (xhr.readyState === 4 || xhr.status === 201) {
-        window.location.href = "http://127.0.0.1:8000/views/search-result";
+        window.location.href = "http://127.0.0.1:8000/views/final-result";
         console.log("Received data");
         console.log(xhr.responseText);
 
@@ -167,6 +167,11 @@ for (var i = 0; i < result_links.length; i++) {
 
     xhr = getXmlHttpRequestObject();
     xhr.onreadystatechange = sendToNewPage;
+
+    xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    // Send the request over the network
+    xhr.send(JSON.stringify({"link": clickedLink}));
 
     // if (clickedLink === 'youtube.come') {
     //

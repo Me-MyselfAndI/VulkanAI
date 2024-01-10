@@ -32,6 +32,22 @@ def go_to():
     print("Redirected to search result")
     return redirect(url_for("views.search_result"))
 
+@views.route("/final-result", methods=["POST", "GET", "PUT"])
+def final_result():
+    finalResultFile = open("ui/templates/final_result.html", 'w')
+
+    if request.method == "POST":
+        print("Loading selected page")
+
+    # Safety check just in case tricky user tries to access page before it loads
+    if finalResultFile.read() == "":
+        print("Showing loader")
+        return render_template("loader.html")
+
+    print("Showing actual result")
+    return render_template("final_result.html")
+
+
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
