@@ -38,11 +38,18 @@ def final_result():
 
     if request.method == "POST":
         print("Loading selected page")
+        received_data = request.get_json()
+        formatted_search = gpt_engine.get_response(
+            "Reformat this text into a searchable query: " + str(received_data["data"]))
+        url = received_data["pref-website"]
+        print(url)
+        page = search_engine.get_website(None, url)
+        parse_website(received_data, formatted_search, page, "final_result.html")
 
     # Safety check just in case tricky user tries to access page before it loads
-    if finalResultFile.read() == "":
-        print("Showing loader")
-        return render_template("loader.html")
+    #if finalResultFile.read() == "":
+    #    print("Showing loader")
+    #    return render_template("loader.html")
 
     print("Showing actual result")
     return render_template("final_result.html")
@@ -82,7 +89,7 @@ def search_result():
                 if mainDiv in content:
                     addPos = len(mainDiv)
                     pos = content.index(mainDiv) + addPos
-                    content = content[:pos] + "<h2>" + formatted_search + "</h2>" + content[pos:]
+                    content = content[:pos] + "<h2 id='search-input'>" + formatted_search + "</h2>" + content[pos:]
                 if list in content:
                     for link in links_list:
                         addPos = len(list)
@@ -99,7 +106,8 @@ def search_result():
             # Open link (default opens 0th link, otherwise use link_number argument)
             page = search_engine.get_first_website()
 
-            parse_website(received_data, formatted_search, page)
+            parse_website(received_data, formatted_search, page, "result.html")
+
 
             print("Redirected to go-to page")
             return redirect(url_for("views.go_to"))
@@ -114,7 +122,7 @@ def search_result():
 
 #HELPER FUNCTIONS
 #Parse selected website and show user relevant information
-def parse_website(received_data: dict, formatted_search: str, page: dict):
+def parse_website(received_data: dict, formatted_search: str, page: dict, render_file: str):
     # Get page url
     website_url = page['url']
     # If user has a prefered website to search on, use that website
@@ -140,7 +148,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict):
         print("Saved CSS")
 
     # Save HTML ---------------------------------------------------------------
-    with open("ui/templates/result.html", "w", encoding="utf-8") as file:
+    with open(f"ui/templates/{render_file}", "w", encoding="utf-8") as file:
         file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
         print("Saved HTML")
 
@@ -148,12 +156,11 @@ def parse_website(received_data: dict, formatted_search: str, page: dict):
     add_overlay()
 
     # Send success message so we can start reload page to render new html
-    message = received_data['data']
     return_data = {
         "status": "success",
-        "message": f"received: {message}"
+        "message": f"received"
     }
-    endpoint_url = "http://127.0.0.1:8000/views/search-result"
+    endpoint_url = "http://127.0.0.1:8000/views/final-result"
     response = requests.post(endpoint_url, json=return_data)
     if response.status_code == 200 or response.status_code == 201:
         print("Sent data")
