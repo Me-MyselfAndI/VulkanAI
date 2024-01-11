@@ -173,7 +173,7 @@ for (var i = 0; i < result_links.length; i++) {
     xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     // Send the request over the network
-    xhr.send(JSON.stringify({"data": inputValue,  "pref-website": clickedLink}));
+    xhr.send(JSON.stringify({"data": inputValue, "pref-website": clickedLink}));
 
     // if (clickedLink === 'youtube.come') {
     //

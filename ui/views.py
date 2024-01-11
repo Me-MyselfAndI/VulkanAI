@@ -34,9 +34,9 @@ def go_to():
 
 @views.route("/final-result", methods=["POST", "GET", "PUT"])
 def final_result():
-    finalResultFile = open("ui/templates/final_result.html", 'w')
+    finalResultFile = open("ui/templates/final_result.html", 'r')
 
-    if request.method == "POST":
+    if request.method == "POST" and finalResultFile.read() == "":
         print("Loading selected page")
         received_data = request.get_json()
         formatted_search = gpt_engine.get_response(
@@ -60,6 +60,7 @@ def search_result():
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     formatted_search = ""
     result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
+    finalResultFile = open("ui/templates/final_result.html", 'w')#Clean final result file every time we go back to search page so we can render new one in there
     if request.method == "POST" and result_file.read() == "":
         #Format and get the data
         received_data = request.get_json()
