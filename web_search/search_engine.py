@@ -61,8 +61,15 @@ class SearchEngine:
     def get_first_website(self):
         return self.get_website(0)
 
-    def get_website(self, link_number):
-        website_url = self.last_search["res"][link_number]['url']
+    def get_website(self, link_number=None, url=None):
+        if link_number is None == url is None:
+            print("\u001b[31mError: Cannot specify both link number and url, has to be just one of those\u001b[0m")
+            return
+
+        if url is not None and url in self.last_search['res']:
+            website_url = self.last_search["res"][url]
+        if link_number is not None:
+            website_url = self.last_search["res"][link_number]['url']
 
         self.driver.get(website_url)
         WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(By.XPATH, "//body/*")) > 0)
