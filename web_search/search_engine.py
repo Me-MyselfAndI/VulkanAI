@@ -68,7 +68,7 @@ class SearchEngine:
 
         urls = list(map(lambda item: item['url'], self.last_search['res']))
         if url is not None and url in urls:
-            website_url = self.last_search["res"][urls.index(url)]
+            website_url = self.last_search["res"][urls.index(url)]['url']
         elif link_number is not None:
             website_url = self.last_search["res"][link_number]['url']
         else:
