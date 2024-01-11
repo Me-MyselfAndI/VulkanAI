@@ -66,10 +66,14 @@ class SearchEngine:
             print("\u001b[31mError: Cannot specify both link number and url, has to be just one of those\u001b[0m")
             return
 
-        if url is not None and url in self.last_search['res']:
-            website_url = self.last_search["res"][url]
-        if link_number is not None:
+        urls = list(map(lambda item: item['url'], self.last_search['res']))
+        if url is not None and url in urls:
+            website_url = self.last_search["res"][urls.index(url)]
+        elif link_number is not None:
             website_url = self.last_search["res"][link_number]['url']
+        else:
+            print("\u001b[31mError: Invalid argument was provided\u001b[0m")
+            return
 
         self.driver.get(website_url)
         WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(By.XPATH, "//body/*")) > 0)
@@ -114,7 +118,7 @@ if __name__ == '__main__':
     # Start entry is 0 by default, it's the pagination offset
     search_engine.update_links("Japanese car under 6000 dollars and 130k miles", start_entry=0, search_website=None)
     # Open link (default opens 0th link, otherwise use link_number argument)
-    page = search_engine.get_first_website()
+    page = search_engine.get_website(url='link')
     print('\n\n\n\u001b[32mHTML\u001b[0m\n', page['html'])
     print('\n\n\n\u001b[32mCSS\u001b[0m\n', page['css'])
     print()
