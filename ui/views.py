@@ -150,8 +150,12 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
 
     # Save HTML ---------------------------------------------------------------
     with open(f"ui/templates/{render_file}", "w", encoding="utf-8") as file:
-        file.write(str(scraping_controller.get_parsed_website_html(website, formatted_search)))
-        print("Saved HTML")
+        returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
+        if returnedResponse["status"] == "ok":
+            file.write(str(returnedResponse["response"]))
+            print("Saved HTML")
+        else:
+            print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
 
     # Add Overlay
     add_overlay()
