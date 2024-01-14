@@ -75,7 +75,7 @@ class GPTEngine:
         result = response.choices[0].message.content
         return result.strip().strip('\n')
 
-    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=5, use_cheap_model=False):
+    def get_responses_async(self, prompt: str, args=(), image_urls=None, batches=10, timeout=10, use_cheap_model=False):
         results = []
         if image_urls and (len(args) in (0, len(image_urls))):
             use_images = True
