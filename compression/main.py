@@ -210,7 +210,7 @@ class ScrapingController:
                     print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._gpt, verbose=verbose)
+                crawler = Crawler(self._gpt, cheap_llm_engine=self._gemini, verbose=verbose)
                 parser = Parser(website['url'], html=website['html'], verbose=verbose)
                 product_groups = parser.find_container_groups(website['url'])
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query,

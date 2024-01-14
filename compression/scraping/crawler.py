@@ -1,3 +1,5 @@
+import json
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -25,9 +27,13 @@ chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
 
 
 class Crawler:
-    def __init__(self, llm_engine, verbose=0):
+    def __init__(self, llm_engine, cheap_llm_engine=None, verbose=0):
         self.verbose = verbose
         self.llm_engine = llm_engine
+        if cheap_llm_engine is None:
+            self.cheap_llm_engine = self.llm_engine
+        else:
+            self.cheap_llm_engine = cheap_llm_engine
         self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
     def get_page_source(self, url):
@@ -55,7 +61,7 @@ class Crawler:
         except TimeoutException:
             return False
 
-    def filter_marketplace_products(self, product_info, search_query, threshold=3):
+    def filter_marketplace_products(self, product_info, search_query, threshold=3, llm_request_batching_quantity=8):
         self.handle_popup_alert(search_query)
         if self.verbose >= 2:
             print(f"Products ({len(product_info)}):")
@@ -78,7 +84,8 @@ class Crawler:
             for i, product in enumerate(nonempty_description_products):
                 print(i, product)
 
-        args, image_urls = [], []
+
+        args = []
         for product in nonempty_description_products:
             product_str = '['
             for property in product['text']:
@@ -87,11 +94,44 @@ class Crawler:
                 product_str = product_str[:-1] + ']'
             args.append(product_str)
 
-        llm_responses = self.llm_engine.get_responses_async(
-            f'Customer looking for"{search_query}".Rank product "{{}}"'
-            f', from 1(terrible match for request) to 5(perfect match). ONLY NUMBER NO TEXT AT ALL',
+        args = self.cheap_llm_engine.get_responses_async(
+            f'I give you list of product properties and values: {{}}. You need to compress the number of tokens here'
+            f'for the purpose of evaluating relevance for {search_query}. You do this in two primary ways: by removing'
+            f'information irrelevant for making this decision and by bundling together properties that belong together '
+            f'(such as when a property name is separated from its value). Return compressed description and nothing else',
             args=args
         )
+        batched_args = [args[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity] for i in range(len(args) // llm_request_batching_quantity)]
+
+        batched_llm_responses = self.llm_engine.get_responses_async(
+            f'Customer looking for"{search_query}".Rank products "{{}} " from 1(terrible match for request) to '
+            f'5(perfect match). RETURN ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
+            args=batched_args,
+            timeout=10 * llm_request_batching_quantity
+        )
+
+        llm_responses = []
+        for i, curr_batched_llm_responses in enumerate(batched_llm_responses):
+            try:
+                curr_batched_llm_responses = json.loads(curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
+            except Exception as error:
+                if self.verbose >= 1:
+                    print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
+                llm_responses.extend(['0'] * llm_request_batching_quantity)
+                continue
+
+            for curr_key in range(llm_request_batching_quantity):
+                if str(curr_key) not in curr_batched_llm_responses:
+                    if self.verbose >= 2:
+                        print(f"\u001b[33mWarning: llm response {curr_key} could not be found in batch #{i}\u001b[0m")
+                    llm_responses.append('0')
+                    continue
+                try:
+                    llm_responses.append(str(curr_batched_llm_responses[str(curr_key)]))
+                except Exception as error:
+                    if self.verbose >= 1:
+                        print(f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
+                    llm_responses.append('0')
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
