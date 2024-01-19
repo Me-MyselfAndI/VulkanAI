@@ -1,4 +1,5 @@
 import json
+import re
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,6 +16,7 @@ chrome_options.add_argument("--headless=new")
 
 import sys
 import os
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
@@ -84,7 +86,6 @@ class Crawler:
             for i, product in enumerate(nonempty_description_products):
                 print(i, product)
 
-
         args = []
         for product in nonempty_description_products:
             product_str = '['
@@ -101,7 +102,8 @@ class Crawler:
             f'(such as when a property name is separated from its value). Return compressed description and nothing else',
             args=args
         )
-        batched_args = [args[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity] for i in range(len(args) // llm_request_batching_quantity)]
+        batched_args = [args[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity] for i in
+                        range(len(args) // llm_request_batching_quantity)]
 
         batched_llm_responses = self.llm_engine.get_responses_async(
             f'Customer looking for"{search_query}".Rank products "{{}} " from 1(terrible match for request) to '
@@ -113,7 +115,8 @@ class Crawler:
         llm_responses = []
         for i, curr_batched_llm_responses in enumerate(batched_llm_responses):
             try:
-                curr_batched_llm_responses = json.loads(curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
+                curr_batched_llm_responses = json.loads(
+                    curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
             except Exception as error:
                 if self.verbose >= 1:
                     print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
@@ -130,7 +133,8 @@ class Crawler:
                     llm_responses.append(str(curr_batched_llm_responses[str(curr_key)]))
                 except Exception as error:
                     if self.verbose >= 1:
-                        print(f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
+                        print(
+                            f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
                     llm_responses.append('0')
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
@@ -152,12 +156,14 @@ class Crawler:
                 continue
         return filtered_products
 
-    def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15, max_recursion_depth=2, lang='english'):
+    def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15,
+                                  max_recursion_depth=2, lang='english'):
         self.handle_popup_alert(search_query)
         parser = Parser(website['url'], html=website['html'])
         compressed_original_page_tags = parser.find_text_content()
         page_content_relevance = self.query_llm_for_text_relevance(compressed_original_page_tags, search_query)
-        curr_page_relevance_rate = len([1 for item in page_content_relevance if item >= threshold]) / len(page_content_relevance)
+        curr_page_relevance_rate = len([1 for item in page_content_relevance if item >= threshold]) / len(
+            page_content_relevance)
         if max_recursion_depth == 0 or curr_page_relevance_rate >= min_relevance_rate:
             return {
                 'relevance': curr_page_relevance_rate,
@@ -181,7 +187,7 @@ class Crawler:
             print(f'Total of {len(menu_items_flattened)} items before purging')
         menu_items_flattened = [
             item for item in menu_items_flattened
-            if item['score'] >= threshold and item['item']['href']
+            if item.get('score', 0) >= threshold and item['item']['href']
         ]
 
         if self.verbose >= 2:
@@ -208,7 +214,7 @@ class Crawler:
                 }
                 result = self.navigate_to_relevant_page(
                     search_query, new_website,
-                    max_recursion_depth=max_recursion_depth-1,
+                    max_recursion_depth=max_recursion_depth - 1,
                     threshold=threshold,
                     min_relevance_rate=min_relevance_rate, lang=lang
                 )
@@ -234,26 +240,75 @@ class Crawler:
             'html': website['html']
         }
 
-    def query_llm_menus_for_relevance(self, menu_items, search_query, lang):
-        responses = self.llm_engine.get_responses_async('{}', [
-            f"How likely is menu item \"{menu_item['item'].get('text', '')}\" at link \"{menu_item['item']['href']}\" "
-            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1-5, NOTHING else"
-            for menu_item in menu_items
+    def query_llm_menus_for_relevance(self, menu_items, search_query, lang, llm_request_batching_quantity=10):
+        if lang is None:
+            lang_specifier_phrase = f''
+        else:
+            lang_specifier_phrase = f'Non-{lang} rejected'
+
+        batched_menu_items = {
+            'url': [
+                list(
+                    map(
+                        lambda x: x.get('item').get('href', '').strip().strip('\n').strip('\t').strip(),
+                         menu_items[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity]
+                    )
+                )
+                for i in range(len(menu_items) // llm_request_batching_quantity)
+            ],
+            'text': [
+                list(map(lambda x: re.sub('\n+', ' ', x.get('text', '').strip().strip('\n').strip('\t').strip()),
+                         menu_items[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity]))
+                for i in range(len(menu_items) // llm_request_batching_quantity)
+            ]
+        }
+
+        batched_llm_responses = self.llm_engine.get_responses_async('{}', [
+            f"How likely is each menu item in: {[f'#{i}: title: {text}, url: {url}' for i, (text, url) in enumerate(zip(texts, urls))]}"
+            f"to contain answers to \"{search_query}\"? For each, return 1(least)-5(most likely),"
+            f"RETURN ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE " + '{{"0":3,"1":4,"2":4,...}}' + f"{lang_specifier_phrase}. RETURN NOTHING OTHER THAN THE JSON"
+            for texts, urls in zip(batched_menu_items['text'], batched_menu_items['url'])
         ])
-        for i, response in enumerate(responses):
+
+        llm_responses = []
+        for i, curr_batched_llm_responses in enumerate(batched_llm_responses):
             try:
-                responses[i] = int(response)
+                curr_batched_llm_responses = json.loads(
+                    curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
+            except Exception as error:
+                if self.verbose >= 1:
+                    print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
+                llm_responses.extend(['0'] * llm_request_batching_quantity)
+                continue
+
+            for curr_key in range(llm_request_batching_quantity):
+                if str(curr_key) not in curr_batched_llm_responses:
+                    if self.verbose >= 2:
+                        print(f"\u001b[33mWarning: llm response {curr_key} could not be found in batch #{i}\u001b[0m")
+                    llm_responses.append('0')
+                    continue
+                try:
+                    llm_responses.append(str(curr_batched_llm_responses[str(curr_key)]))
+                except Exception as error:
+                    if self.verbose >= 1:
+                        print(
+                            f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
+                    llm_responses.append('0')
+
+        for i, response in enumerate(llm_responses):
+            try:
+                llm_responses[i] = int(response)
             except Exception:
-                responses[i] = 0
+                llm_responses[i] = 0
 
                 if self.verbose >= 1:
                     print(f'\u001b[33mWarning! GPT returned {response} for i = {i}\u001b[0m')
 
-        return responses
+        return llm_responses
 
-    def query_llm_for_text_relevance(self, text_items, search_query):
-        responses = self.llm_engine.get_responses_async('{}', [
-            f"How relevant is the menu item \"{text_item['text']}\" query \"{search_query}\"? "
+    def query_llm_for_text_relevance(self, text_items, search_query, use_cheap_engine=False):
+        responses = (self.cheap_llm_engine if use_cheap_engine else self.llm_engine).get_responses_async('{}', [
+            f"How relevant is text \"{text_item['text']}\" for query \"{search_query}\"? "
             f"Only give number 1-5, NOTHING else"
             for text_item in text_items
         ])

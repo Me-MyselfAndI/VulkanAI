@@ -245,7 +245,8 @@ class ScrapingController:
 def main():
     verbose = 2
 
-    url = 'https://www.truecar.com/used-cars-for-sale/listings/honda/price-below-6000/'
+    url = 'https://www.allrecipes.com/recipes/17562/dinner/'
+    search_query = 'Japanese street food'
 
     scraping_controller = ScrapingController(verbose=verbose)
     options = Options()
@@ -263,7 +264,7 @@ def main():
             'html': source_html,
             'lang': 'english'
         },
-        'Used Japanese car under 4500 usd, 150000 mi',
+        search_query=search_query,
         threshold=3,
         verbose=verbose
     )

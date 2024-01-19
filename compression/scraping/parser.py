@@ -143,7 +143,7 @@ class Parser:
             print("Number of products: ", len(products))
         return products
 
-    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
+    def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=4,
                           max_link_search_depth=5):
         if self.soup is None:
             if self.verbose >= 0:
