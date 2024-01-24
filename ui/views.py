@@ -1,3 +1,5 @@
+import sys
+#sys.path.append(r"/var/www/html/") #Server Side
 from flask import Blueprint, render_template, request, redirect, url_for, render_template_string, jsonify
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
@@ -10,21 +12,23 @@ from compression.main import ScrapingController
 views = Blueprint(__name__, "views")
 
 #Get Chat GPT API
-with open(r'keys\keys.yaml') as keys_file:
+#with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+with open(r'keys/keys.yaml') as keys_file: #Local Side
     keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
 
 scraping_controller = ScrapingController(gpt_engine)
 search_engine = SearchEngine()
-result_file = open("ui/templates/result.html", 'w')#Clean results file
 searching_type = "speed"
+#content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
+content = open("ui/templates/template.html", "r",encoding="utf-8").read() #Local Side
+finalContent = ""
 
 #MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
-    result_file = open("ui/templates/result.html", 'w')  # Clean results file
-    css_file = open("ui/static/result.css", 'w')  # Clean css file
+    #css_file = open("ui/static/result.css", 'w')  # Clean css file
     return render_template("index.html")
 
 @views.route("/go-to")
@@ -34,9 +38,9 @@ def go_to():
 
 @views.route("/final-result", methods=["POST", "GET", "PUT"])
 def final_result():
-    finalResultFile = open("ui/templates/final_result.html", 'r')
+    global finalContent
 
-    if request.method == "POST" and finalResultFile.read() == "":
+    if request.method == "POST":
         print("Loading selected page")
         received_data = request.get_json()
         formatted_search = gpt_engine.get_response(
@@ -44,24 +48,19 @@ def final_result():
         url = received_data["pref-website"]
         print(url)
         page = search_engine.get_website(None, url)
-        parse_website(received_data, formatted_search, page, "final_result.html")
-
-    # Safety check just in case tricky user tries to access page before it loads
-    #if finalResultFile.read() == "":
-    #    print("Showing loader")
-    #    return render_template("loader.html")
+        parse_website(received_data, formatted_search, page, finalContent)
 
     print("Showing actual result")
-    return render_template("final_result.html")
+    return render_template_string(finalContent)
 
 
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
+    global content
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     formatted_search = ""
-    result_file = open("ui/templates/result.html", 'r')#Open results file to Check if it has anything loaded in
-    finalResultFile = open("ui/templates/final_result.html", 'w')#Clean final result file every time we go back to search page so we can render new one in there
-    if request.method == "POST" and result_file.read() == "":
+
+    if request.method == "POST":
         #Format and get the data
         received_data = request.get_json()
         print(f"received data: {received_data['data']}")
@@ -83,20 +82,20 @@ def search_result():
         if searching_type == "basic":
             print("Basic Search")
             # Save links in HTML ---------------------------------------------------------------
-            content = open("ui/templates/template.html", "r",encoding="utf-8").read()
+            #content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
+            content = open("ui/templates/template.html", "r", encoding="utf-8").read() #Local Side
             list = "<ul>"
             mainDiv = "<div id='maincontent'>"
-            with open("ui/templates/result.html", "w", encoding="utf-8") as file:
-                if mainDiv in content:
-                    addPos = len(mainDiv)
-                    pos = content.index(mainDiv) + addPos
-                    content = content[:pos] + "<h2 id='search-input'>" + formatted_search + "</h2>" + content[pos:]
-                if list in content:
-                    for link in links_list:
-                        addPos = len(list)
-                        pos = content.index(list) + addPos
-                        content = content[:pos] + f"<li><img src='{link['icon']}'><a href='{link['url']}' class='result-link'>" + link['title'] + "</a><br><p>" + link['url'] +"</p></li>" + content[pos:]
-                file.write(content)
+            #Save HTML to variable
+            if mainDiv in content:
+                addPos = len(mainDiv)
+                pos = content.index(mainDiv) + addPos
+                content = content[:pos] + "<h2 id='search-input'>" + formatted_search + "</h2>" + content[pos:]
+            if list in content:
+                for link in links_list:
+                    addPos = len(list)
+                    pos = content.index(list) + addPos
+                    content = content[:pos] + f"<li><img src='{link['icon']}'><a href='{link['url']}' class='result-link'>" + link['title'] + "</a><br><p>" + link['url'] +"</p></li>" + content[pos:]
 
 
             print("Redirected to go-to page")
@@ -113,17 +112,12 @@ def search_result():
             print("Redirected to go-to page")
             return redirect(url_for("views.go_to"))
 
-    #Safety check just in case tricky user tries to access page before it loads
-    if result_file.read() == "":
-        print("Showing loader")
-        return render_template("loader.html")
-
     print("Showing actual result")
-    return render_template("result.html")
+    return render_template_string(content)
 
 #HELPER FUNCTIONS
 #Parse selected website and show user relevant information
-def parse_website(received_data: dict, formatted_search: str, page: dict, render_file: str):
+def parse_website(received_data: dict, formatted_search: str, page: dict, render_var):
     # Get page url
     website_url = page['url']
     # If user has a prefered website to search on, use that website
@@ -139,7 +133,8 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
 
     # Save CSS
     css_code = page['css']
-    with open('ui/static/result.css', 'w') as css_file:
+    #with open('/var/www/html/ui/static/result.css', 'w') as css_file:#Server Side
+    with open('ui/static/result.css', 'w') as css_file: #Local Side
         for i in range(len(css_code)):
             try:
                 css_file.write(css_code[i])
@@ -149,23 +144,23 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         print("Saved CSS")
 
     # Save HTML ---------------------------------------------------------------
-    with open(f"ui/templates/{render_file}", "w", encoding="utf-8") as file:
-        returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
-        if returnedResponse["status"] == "ok":
-            file.write(str(returnedResponse["response"]))
-            print("Saved HTML")
-        else:
-            print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
+    returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
+    if returnedResponse["status"] == "ok":
+        render_var = str(returnedResponse["response"])
+        print("Saved HTML")
+    else:
+        print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
 
     # Add Overlay
-    add_overlay()
+    #add_overlay()
 
     # Send success message so we can start reload page to render new html
     return_data = {
         "status": "success",
         "message": f"received"
     }
-    endpoint_url = "http://127.0.0.1:8000/views/final-result"
+    #endpoint_url = "http://vulkanai.org:5000/views/final-result" #Server Side
+    endpoint_url = "http://127.0.0.1:8000/views/final-result" #Local Side
     response = requests.post(endpoint_url, json=return_data)
     if response.status_code == 200 or response.status_code == 201:
         print("Sent data")
