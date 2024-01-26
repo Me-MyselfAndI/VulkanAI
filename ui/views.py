@@ -106,7 +106,7 @@ def search_result():
             # Open link (default opens 0th link, otherwise use link_number argument)
             page = search_engine.get_first_website()
 
-            parse_website(received_data, formatted_search, page, "result.html")
+            parse_website(received_data, formatted_search, page, content)
 
 
             print("Redirected to go-to page")
@@ -118,6 +118,7 @@ def search_result():
 #HELPER FUNCTIONS
 #Parse selected website and show user relevant information
 def parse_website(received_data: dict, formatted_search: str, page: dict, render_var):
+    global content, finalContent
     # Get page url
     website_url = page['url']
     # If user has a prefered website to search on, use that website
@@ -147,6 +148,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
     if returnedResponse["status"] == "ok":
         render_var = str(returnedResponse["response"])
+        print(render_var)
         print("Saved HTML")
     else:
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
@@ -161,6 +163,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     }
     #endpoint_url = "http://vulkanai.org:5000/views/final-result" #Server Side
     endpoint_url = "http://127.0.0.1:8000/views/final-result" #Local Side
+    finalContent = render_var
     response = requests.post(endpoint_url, json=return_data)
     if response.status_code == 200 or response.status_code == 201:
         print("Sent data")

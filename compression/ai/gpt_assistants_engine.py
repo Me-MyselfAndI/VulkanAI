@@ -31,7 +31,8 @@ class GPTAssistantsEngine:
             return
 
         if api_key is None:
-            with open(r'keys\keys.yaml') as keys_file:
+            #with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+            with open(r'keys/keys.yaml') as keys_file:
                 keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['gpt-api']
                 api_key = keys['api-url']
                 org_url = keys['org-url']
