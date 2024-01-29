@@ -16,6 +16,7 @@ function hideLoader() {
 }
 //Show loading animation after searching and while page is loading
 showLoader = function(e) {
+    console.log("show loader");
     document.getElementById('loader').style.visibility = 'visible';
 }
 
@@ -34,11 +35,15 @@ function sendToNewPage() {
     showLoader()
     // Check response is ready or not
     if (xhr.readyState === 4 || xhr.status === 201) {
-        //window.location.href = "http://vulkanai.org:5000/views/search-result"; //Server Side
-        window.location.href = "http://127.0.0.1:8000/views/search-result"; //Local Side
+        if(searchType == "basic"){
+            //window.location.href = "http://vulkanai.org:5000/views/search-result"; //Server Side
+            window.location.href = "http://127.0.0.1:8000/views/search-result"; //Local Side
+        } else {
+            //window.location.href = "http://vulkanai.org:5000/views/search-result"; //Server Side
+            window.location.href = "http://127.0.0.1:8000/views/final-result"; //Local Side
+        }
         console.log("Received data");
         console.log(xhr.responseText);
-
     }
 }
 
@@ -54,6 +59,7 @@ document.getElementById("search-button").addEventListener("click", function(even
 
     xhr = getXmlHttpRequestObject();
     xhr.onreadystatechange = sendToNewPage;
+
     //xhr.open("POST", "http://vulkanai.org:5000/views/search-result", true); //Server Side
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true); //Local Side
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");

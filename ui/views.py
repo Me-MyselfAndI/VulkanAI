@@ -41,14 +41,17 @@ def final_result():
     global finalContent
 
     if request.method == "POST":
-        print("Loading selected page")
-        received_data = request.get_json()
-        formatted_search = gpt_engine.get_response(
-            "Reformat this text into a searchable query: " + str(received_data["data"]))
-        url = received_data["pref-website"]
-        print(url)
-        page = search_engine.get_website(None, url)
-        parse_website(received_data, formatted_search, page, finalContent)
+        try:
+            print("Loading selected page")
+            received_data = request.get_json()
+            formatted_search = gpt_engine.get_response(
+                "Reformat this text into a searchable query: " + str(received_data["data"]))
+            url = received_data["pref-website"]
+            print(url)
+            page = search_engine.get_website(None, url)
+            parse_website(received_data, formatted_search, page, finalContent)
+        except Exception as e:
+            print("Failed to load, exception ", e)
 
     print("Showing actual result")
     return render_template_string(finalContent)
@@ -134,15 +137,8 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
 
     # Save CSS
     css_code = page['css']
-    #with open('/var/www/html/ui/static/result.css', 'w') as css_file:#Server Side
-    with open('ui/static/result.css', 'w') as css_file: #Local Side
-        for i in range(len(css_code)):
-            try:
-                css_file.write(css_code[i])
-            except:
-                print("Error while writting a line")
-
-        print("Saved CSS")
+    print("Saved CSS")
+    print(css_code)
 
     # Save HTML ---------------------------------------------------------------
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
@@ -154,16 +150,16 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
 
     # Add Overlay
-    #add_overlay()
+    finalContent = add_overlay(render_var)
 
     # Send success message so we can start reload page to render new html
     return_data = {
         "status": "success",
-        "message": f"received"
+        "message": f"received",
+        "content": finalContent
     }
     #endpoint_url = "http://vulkanai.org:5000/views/final-result" #Server Side
     endpoint_url = "http://127.0.0.1:8000/views/final-result" #Local Side
-    finalContent = render_var
     response = requests.post(endpoint_url, json=return_data)
     if response.status_code == 200 or response.status_code == 201:
         print("Sent data")
@@ -171,7 +167,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         print("Failed to send")
 
 #Add VulkanAI overlay with back button and slider
-def add_overlay():
+def add_overlay(resultHTML: str):
     # Add Overlay button which allows users to go back on page
     cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">\n<link href="../static/result.css" rel="stylesheet">'
     scriptLink = "<script src='../static/redirect.js'></script>\n"
@@ -180,73 +176,30 @@ def add_overlay():
     endBodyTag = '</body>'
     backButton = '<div id="overlay-button"><button onclick="redirectToSearch()" class="button-style" role="button">Back to Search</button></div>\n'
     slider = '<div id="slider-container"><input type="range" min="-100" max="0" value="0" class="range blue" id="slider"/><p class="num" id="start">0</p><p class="num" id="one">1</p><p class="num" id="mid">2</p><p class="num" id="three">3</p><p class="num" id="end">4</p></div>'
-    content = open("ui/templates/result.html", "r",
-                   encoding="utf-8").read()  # Get current content of the html file to change it
 
-    with open("ui/templates/result.html", "w", encoding="utf-8") as result_file:
-        # Add link to button css file
-        if headTag in content:
-            addPos = len(headTag)
-            pos = content.index(headTag) + addPos
-            content = content[:pos] + cssLink + content[pos:]
-        # Add slider
-        if bodyTag in content:
-            addPos = len(bodyTag)
-            pos = content.index(bodyTag) + addPos
-            content = content[:pos] + slider + content[pos:]
-        # Add button itself
-        if bodyTag in content:
-            addPos = len(bodyTag)
-            pos = content.index(bodyTag) + addPos
-            content = content[:pos] + backButton + content[pos:]
-        # Add script to redirect user back to search
-        if endBodyTag in content:
-            pos = content.index(endBodyTag)
-            content = content[:pos] + scriptLink + content[pos:]
-        result_file.write(content)
+    # Add link to button css file
+    if headTag in resultHTML:
+        addPos = len(headTag)
+        pos = resultHTML.index(headTag) + addPos
+        resultHTML = resultHTML[:pos] + cssLink + resultHTML[pos:]
+    # Add slider
+    if bodyTag in resultHTML:
+        addPos = len(bodyTag)
+        pos = resultHTML.index(bodyTag) + addPos
+        resultHTML = resultHTML[:pos] + slider + resultHTML[pos:]
+    # Add button itself
+    if bodyTag in resultHTML:
+        addPos = len(bodyTag)
+        pos = resultHTML.index(bodyTag) + addPos
+        resultHTML = resultHTML[:pos] + backButton + resultHTML[pos:]
+    # Add script to redirect user back to search
+    if endBodyTag in resultHTML:
+        pos = resultHTML.index(endBodyTag)
+        resultHTML = resultHTML[:pos] + scriptLink + resultHTML[pos:]
+
     print("Added overlay")
+    print(resultHTML)
+    return resultHTML
 
 
 
-#TESTING FUNCTIONS, CAN BE DELETED
-@views.route("/test", methods=["POST", "GET", "PUT"])
-def test():
-    # Use update-links method to refresh the search results (stored inside the class).
-    # Start entry is 0 by default, it's the pagination offset
-    search_engine.update_links("Chupa-chups",start_entry=0)
-    # Open link (default opens 0th link, otherwise use link_number argument)
-    page = search_engine.get_first_website()
-    return render_template_string(page['html'])
-
-@views.route("/format-search", methods=["GET", "POST"])
-def format_search():
-    if request.method == "POST":
-        received_data = request.get_json()
-        print(f"received data: {received_data['data']}")
-        formatted_search = gpt_engine.get_response("Reformat this text into a searchable query: " + str(received_data["data"]))
-        print(formatted_search)
-    return render_template("index.html")
-
-
-#Extra Code
-    """css_link = '<link href="../static/result.css" rel="stylesheet">\n'
-    tag = '</head>'
-    if tag in page['html']:
-        add_pos = len(tag)
-        position = page['html'].index(tag) + add_pos
-        new_html = page['html'][:position] + css_link + page['html'][position:]
-    try:
-        return render_template_string(new_html)
-    except:
-        return render_template_string(page['html'])"""
-
-# Transfer template to final result file and start transfering important data into the template
-template = ""
-"""with open("ui/templates/template.html", "r", encoding="utf-8") as template_file:
-    template = template_file.read()
-with open("ui/templates/final_result.html", "w", encoding="utf-8") as result_file:
-    result_file.write(template)
-    print(content)
-    for line in (line.strip("\n") for line in content):
-       if "h2" in line:
-           print(line)"""
