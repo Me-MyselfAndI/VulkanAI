@@ -155,7 +155,7 @@ class Crawler:
     def navigate_to_relevant_page(self, search_query, website, threshold=4, min_relevance_rate=0.15, max_recursion_depth=2, lang='english'):
         self.handle_popup_alert(search_query)
         parser = Parser(website['url'], html=website['html'])
-        compressed_original_page_tags = parser.find_text_content()
+        compressed_original_page_tags = parser.find_text_content()['items']
         page_content_relevance = self.query_llm_for_text_relevance(compressed_original_page_tags, search_query)
         curr_page_relevance_rate = len([1 for item in page_content_relevance if item >= threshold]) / len(page_content_relevance)
         if max_recursion_depth == 0 or curr_page_relevance_rate >= min_relevance_rate:
@@ -236,8 +236,8 @@ class Crawler:
 
     def query_llm_menus_for_relevance(self, menu_items, search_query, lang):
         responses = self.llm_engine.get_responses_async('{}', [
-            f"How likely is menu item \"{menu_item['item'].get('text', '')}\" at link \"{menu_item['item']['href']}\" "
-            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1-5, NOTHING else"
+            f"How likely is menu item \"{menu_item['item'].get('text', '')}\" "
+            f"answers \"{search_query}\" Non-\"{lang}\" rejected. Respond number 1-5, NOTHING else AT ALL ASIDE FROM NUMBER"
             for menu_item in menu_items
         ])
         for i, response in enumerate(responses):
