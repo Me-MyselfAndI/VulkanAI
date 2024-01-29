@@ -12,7 +12,8 @@ class AsticaEngine:
     def __init__(self, api_key=None, timeout=200, verbose=0):
         self.verbose = verbose
         if api_key is None:
-            with open(r'keys\keys.yaml') as keys_file:
+            #with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+            with open(r'keys/keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['astica-api']
         self.api_key = api_key
         self.timeout = timeout

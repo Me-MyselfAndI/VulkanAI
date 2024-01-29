@@ -14,7 +14,8 @@ class MistralEngine:
         self.top_p = top_p
 
         if api_key is None:
-            with open(r'keys\keys.yaml') as keys_file:
+            #with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+            with open(r'keys/keys.yaml') as keys_file:
                 api_key = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']['mistral-api']
 
         self.model = 'mistral-medium'
