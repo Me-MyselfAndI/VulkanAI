@@ -79,7 +79,7 @@ class ScrapingController:
 def main():
     verbose = 2
 
-    url = 'https://www.avito.ru/all/zhivotnye'
+    url = 'https://nadezhdin2024.ru/#main'
 
     scraping_controller = ScrapingController(verbose=verbose)
     options = Options()
@@ -97,7 +97,7 @@ def main():
             'html': source_html,
             'lang': None
         },
-        'I am looking for a small dog to buy near Moscow, Russia',
+        'Я хочу поставить подпись за Надеждина в Комсомольске-на-Амуре',
         threshold=3,
         verbose=verbose
     )

@@ -9,12 +9,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from compression.scraping.parser import Parser
 
+import sys
+import os
+
 chrome_options = Options()
 chrome_options.add_argument("--ignore-certificate-errors")
 chrome_options.add_argument("--headless=new")
 
-import sys
-import os
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)

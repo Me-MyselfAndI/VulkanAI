@@ -18,7 +18,7 @@ with open(r'keys/keys.yaml') as keys_file: #Local Side
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
 
-scraping_controller = ScrapingController(gpt_engine)
+scraping_controller = ScrapingController(llm='gpt', cheap_llm='gemini')
 search_engine = SearchEngine()
 searching_type = "speed"
 #content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
@@ -40,6 +40,7 @@ def go_to():
 def final_result():
     global finalContent
 
+
     if request.method == "POST":
         try:
             print("Loading selected page")
@@ -48,7 +49,7 @@ def final_result():
                 "Reformat this text into a searchable query: " + str(received_data["data"]))
             url = received_data["pref-website"]
             print(url)
-            page = search_engine.get_website(None, url)
+            page = search_engine.get_website(url=url)
             parse_website(received_data, formatted_search, page, finalContent)
         except Exception as e:
             print("Failed to load, exception ", e)
