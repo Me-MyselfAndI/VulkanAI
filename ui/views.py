@@ -15,7 +15,7 @@ with open(r'keys\keys.yaml') as keys_file:
 
     gpt_engine = GPTEngine(keys['gpt-api']['api-url'], keys['gpt-api']['org-url'])
 
-scraping_controller = ScrapingController(gpt_engine)
+scraping_controller = ScrapingController(llm='gpt', cheap_llm='gemini')
 search_engine = SearchEngine()
 result_file = open("ui/templates/result.html", 'w')#Clean results file
 searching_type = "speed"
@@ -43,7 +43,7 @@ def final_result():
             "Reformat this text into a searchable query: " + str(received_data["data"]))
         url = received_data["pref-website"]
         print(url)
-        page = search_engine.get_website(None, url)
+        page = search_engine.get_website(url=url)
         parse_website(received_data, formatted_search, page, "final_result.html")
 
     # Safety check just in case tricky user tries to access page before it loads
