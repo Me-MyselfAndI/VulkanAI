@@ -10,7 +10,8 @@ getXmlHttpRequestObject = function () {
 
 function redirectToSearch() {
     console.log("Back to Search");
-    window.location.href = "http://127.0.0.1:8000/views/";
+    //window.location.href = "http://vulkanai.org:5000/"; //Server Side
+    window.location.href = "http://127.0.0.1:8000/views/"; //Local Side
 }
 
 //Slider JS
@@ -149,10 +150,10 @@ function sendToNewPage() {
     showLoader()
     // Check response is ready or not
     if (xhr.readyState === 4 || xhr.status === 201) {
+        //window.location.href = "http://vulkanai.org:5000/views/final-result"; //Server Side
         window.location.href = "http://127.0.0.1:8000/views/final-result";
         console.log("Received data");
         console.log(xhr.responseText);
-
     }
 }
 
@@ -160,23 +161,25 @@ function sendToNewPage() {
 let result_links = document.getElementsByClassName('result-link');
 for (var i = 0; i < result_links.length; i++) {
     result_links[i].addEventListener('click', function(event) {
-    // prevent navigating to a new page
-    event.preventDefault();
-    let inputValue = document.getElementById("search-input").innerHTML;
-    let clickedLink = this.href;
-    console.log('Clicked on: ' + clickedLink);
-    console.log(inputValue)
+        showLoader()
+        // prevent navigating to a new page
+        event.preventDefault();
+        let inputValue = document.getElementById("search-input").innerHTML;
+        let clickedLink = this.href;
+        console.log('Clicked on: ' + clickedLink);
+        console.log(inputValue)
 
-    xhr = getXmlHttpRequestObject();
-    xhr.onreadystatechange = sendToNewPage;
+        xhr = getXmlHttpRequestObject();
+        xhr.onreadystatechange = sendToNewPage;
 
-    xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);
-    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    // Send the request over the network
-    xhr.send(JSON.stringify({"data": inputValue, "pref-website": clickedLink}));
+        //xhr.open("POST", "http://vulkanai.org:5000/views/final-result", true); //Server Side
+        xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);//Local Side
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        // Send the request over the network
+        xhr.send(JSON.stringify({"data": inputValue, "pref-website": clickedLink}));
 
-    // if (clickedLink === 'youtube.come') {
-    //
-    // }
+        // if (clickedLink === 'youtube.come') {
+        //
+        // }
   });
 }

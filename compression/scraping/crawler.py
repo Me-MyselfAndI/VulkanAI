@@ -21,7 +21,9 @@ parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
 sys.path.append(vulkanai_dir)
 
+#capsolver_extension_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/extension" #Server Side
 capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension"
+#chrome_driver_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/chromedriver.exe" #Server Side
 chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe"
 chrome_service = Service(executable_path=chrome_driver_path)
 chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")

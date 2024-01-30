@@ -14,7 +14,8 @@ import requests
 class SearchEngine:
     def __init__(self):
         self.last_search = {"res": [], "prompt": ""}
-        with open(r'keys\keys.yaml') as keys_file:
+        #with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+        with open(r'keys/keys.yaml') as keys_file:
             self.key = yaml.load(keys_file, yaml.FullLoader)['keys']['web-search']['serp-api']
 
     def update_links(self, prompt, start_entry=0, search_website=None):
