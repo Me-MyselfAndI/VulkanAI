@@ -112,10 +112,12 @@ class Parser:
             text_tag_types.extend(tag_types)
 
         for i, product in enumerate(products):
+            curr_tag = curr_parent
             curr_parent = product['parent']
             for _ in range(min_outer_steps_text):
                 if curr_parent.parent is None or len(curr_parent.parent.find_all(text=True)) > min_stop_element_count:
                     break
+                curr_tag = curr_parent
                 curr_parent = curr_parent.parent
             while True:
                 if curr_parent is None:
@@ -132,8 +134,10 @@ class Parser:
                         curr_parent = curr_parent.parent
                         continue
                     products[i]['text'] = useful_text
+                    products[i]['tag'] = curr_tag
                     products[i].pop('parent')
                     break
+                curr_tag = curr_parent
                 curr_parent = curr_parent.parent
 
         for i in sorted(list(products_to_delete), key=lambda x: -x):
@@ -141,7 +145,7 @@ class Parser:
 
         if self.verbose >= 2:
             print("Number of products: ", len(products))
-        return products
+        return {'products': products, 'tree': self.soup}
 
     def find_website_menu(self, likelihood_threshold=0.5, min_common_depth=0, max_common_depth=7,
                           max_link_search_depth=5):
@@ -284,7 +288,7 @@ class Parser:
                 href = menu_items[ancestor]['items'][i]['href']
                 if href is not None and not re.match(r'^\w+:?//', href):
                     menu_items[ancestor]['items'][i]['href'] = urljoin(self.url, href)
-                menu_items[ancestor]['items'][i].pop('tag')
+                # menu_items[ancestor]['items'][i].pop('tag')
                 menu_items[ancestor]['items'][i].pop('score')
                 menu_items[ancestor]['items'][i].pop('descendant-depth')
 
@@ -321,4 +325,4 @@ class Parser:
                     discovered_tags.remove(discovered_tags[i])
                     break
 
-        return discovered_tags
+        return {'items': discovered_tags, 'tree': self.soup}
