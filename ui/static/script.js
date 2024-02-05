@@ -8,7 +8,7 @@ getXmlHttpRequestObject = function () {
     return xhr;
 };
 
-let searchType = "speed";
+let searchType = "basic";
 
 //Hide loader after page has loaded
 function hideLoader() {
@@ -100,8 +100,18 @@ $('textarea').on({
     }
 });
 
+
+
 //Send what type of search user is using
-$("#speed").click(function(){
+function setSearchType(){
+    var checkmark = document.getElementById("speed");
+    if(checkmark.checked) {
+        searchType = "speed";
+    } else {
+        searchType = "basic";
+    }
+}
+/*$("#speed").click(function(){
     if($('input[type=radio]:checked').length > 0){
        searchType = "speed";
     }
@@ -111,4 +121,4 @@ $("#basic").click(function(){
     if($('input[type=radio]:checked').length > 0){
        searchType = "basic";
     }
-})
+})*/

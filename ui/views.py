@@ -20,7 +20,7 @@ with open(r'keys/keys.yaml') as keys_file: #Local Side
 
 scraping_controller = ScrapingController(llm='gpt', cheap_llm='gemini')
 search_engine = SearchEngine()
-searching_type = "speed"
+searching_type = "basic"
 #content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
 content = open("ui/templates/template.html", "r",encoding="utf-8").read() #Local Side
 finalContent = ""
@@ -40,7 +40,6 @@ def go_to():
 def final_result():
     global finalContent
 
-
     if request.method == "POST":
         try:
             print("Loading selected page")
@@ -55,7 +54,20 @@ def final_result():
             print("Failed to load, exception ", e)
 
     print("Showing actual result")
-    return render_template_string(finalContent)
+    #Fix the bug with comment lines not been closed
+    splitContent = ""
+    splitContent = iter(finalContent.splitlines())
+    fixedContent = ""
+    for line in splitContent:
+        count_open = line.count('{#')
+        count_close = line.count('#}')
+        if count_open > count_close:
+            diff = count_open - count_close
+            line += '#}' * diff
+        fixedContent += line + " "
+    print(fixedContent)
+
+    return render_template_string(fixedContent)
 
 
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
@@ -137,9 +149,12 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     }
 
     # Save CSS
-    css_code = page['css']
-    print("Saved CSS")
-    print(css_code)
+    try:
+        css_code = page['css']
+        print("Saved CSS")
+        print(css_code)
+    except:
+        print("Failed to get css code")
 
     # Save HTML ---------------------------------------------------------------
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
@@ -151,7 +166,8 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
 
     # Add Overlay
-    finalContent = add_overlay(render_var)
+    #finalContent = add_overlay(render_var)
+    finalContent = render_var
 
     # Send success message so we can start reload page to render new html
     return_data = {
