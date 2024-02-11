@@ -14,6 +14,55 @@ function redirectToSearch() {
     window.location.href = "http://127.0.0.1:8000/views/"; //Local Side
 }
 
+//Hide loader after page has loaded
+function hideLoader() {
+    document.getElementById('loader').style.visibility = 'hidden';
+}
+//Show loading animation after searching and while page is loading
+showLoader = function(e) {
+    document.getElementById('loader').style.visibility = 'visible';
+}
+
+//Move user search result page
+function sendToNewPage() {
+    console.log("Sending user to new page");
+    showLoader()
+    // Check response is ready or not
+    if (xhr.readyState === 4 || xhr.status === 201) {
+        //window.location.href = "http://vulkanai.org:5000/views/final-result"; //Server Side
+        window.location.href = "http://127.0.0.1:8000/views/final-result";
+        console.log("Received data");
+        console.log(xhr.responseText);
+    }
+}
+
+//Refactor and render links
+let result_links = document.getElementsByClassName('result-link');
+for (var i = 0; i < result_links.length; i++) {
+    result_links[i].addEventListener('click', function(event) {
+        showLoader()
+        // prevent navigating to a new page
+        event.preventDefault();
+        let inputValue = document.getElementById("search-input").innerHTML;
+        let clickedLink = this.href;
+        console.log('Clicked on: ' + clickedLink);
+        console.log(inputValue)
+
+        xhr = getXmlHttpRequestObject();
+        xhr.onreadystatechange = sendToNewPage;
+
+        //xhr.open("POST", "http://vulkanai.org:5000/views/final-result", true); //Server Side
+        xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);//Local Side
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        // Send the request over the network
+        xhr.send(JSON.stringify({"data": inputValue, "pref-website": clickedLink}));
+
+        // if (clickedLink === 'youtube.come') {
+        //
+        // }
+  });
+}
+
 //Slider JS
 var inputRange = document.getElementsByClassName('range')[0],
     maxValue = 100, // the higher the smoother when dragging
@@ -134,52 +183,3 @@ inputRange.addEventListener('input', function() {
         console.log("3 mods");
     }
 });
-
-//Hide loader after page has loaded
-function hideLoader() {
-    document.getElementById('loader').style.visibility = 'hidden';
-}
-//Show loading animation after searching and while page is loading
-showLoader = function(e) {
-    document.getElementById('loader').style.visibility = 'visible';
-}
-
-//Move user search result page
-function sendToNewPage() {
-    console.log("Sending user to new page");
-    showLoader()
-    // Check response is ready or not
-    if (xhr.readyState === 4 || xhr.status === 201) {
-        //window.location.href = "http://vulkanai.org:5000/views/final-result"; //Server Side
-        window.location.href = "http://127.0.0.1:8000/views/final-result";
-        console.log("Received data");
-        console.log(xhr.responseText);
-    }
-}
-
-//Refactor and render links
-let result_links = document.getElementsByClassName('result-link');
-for (var i = 0; i < result_links.length; i++) {
-    result_links[i].addEventListener('click', function(event) {
-        showLoader()
-        // prevent navigating to a new page
-        event.preventDefault();
-        let inputValue = document.getElementById("search-input").innerHTML;
-        let clickedLink = this.href;
-        console.log('Clicked on: ' + clickedLink);
-        console.log(inputValue)
-
-        xhr = getXmlHttpRequestObject();
-        xhr.onreadystatechange = sendToNewPage;
-
-        //xhr.open("POST", "http://vulkanai.org:5000/views/final-result", true); //Server Side
-        xhr.open("POST", "http://127.0.0.1:8000/views/final-result", true);//Local Side
-        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        // Send the request over the network
-        xhr.send(JSON.stringify({"data": inputValue, "pref-website": clickedLink}));
-
-        // if (clickedLink === 'youtube.come') {
-        //
-        // }
-  });
-}

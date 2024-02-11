@@ -7,6 +7,7 @@ from compression.ai.gpt_engine import GPTEngine
 import yaml, os, flask, json, requests, time
 from compression.main import ScrapingController
 
+
 #Init Classes
 
 views = Blueprint(__name__, "views")
@@ -29,6 +30,7 @@ finalContent = ""
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
     #css_file = open("ui/static/result.css", 'w')  # Clean css file
+    # cache.clear()
     return render_template("index.html")
 
 @views.route("/go-to")
