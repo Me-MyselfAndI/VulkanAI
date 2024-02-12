@@ -67,7 +67,7 @@ def final_result():
             diff = count_open - count_close
             line += '#}' * diff
         fixedContent += line + " "
-    print(fixedContent)
+    print("Final result:", fixedContent)
 
     return render_template_string(fixedContent)
 
@@ -161,6 +161,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     # Save HTML ---------------------------------------------------------------
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
     if returnedResponse["status"] == "ok":
+        print("Status is Okay")
         render_var = str(returnedResponse["response"])
         print(render_var)
         print("Saved HTML")
