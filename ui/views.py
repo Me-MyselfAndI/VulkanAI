@@ -1,19 +1,17 @@
 import sys
-#sys.path.append(r"/var/www/html/") #Server Side
-from flask import Blueprint, render_template, request, redirect, url_for, render_template_string, jsonify
+
+#sys.path.append(r"/var/www/html/")  # Server Side
+from flask import Blueprint, render_template, request, redirect, url_for, render_template_string, jsonify, Response
 from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
-#from compression.compression_engine import CompressionEngine
 import yaml, os, flask, json, requests, time
 from compression.main import ScrapingController
 
-
-#Init Classes
-
+# Init Classes
 views = Blueprint(__name__, "views")
 
-#Get Chat GPT API
-#with open(r'/var/www/html/keys/keys.yaml') as keys_file: #Server Side
+# Get Chat GPT API
+#with open(r'/var/www/html/keys/keys.yaml') as keys_file:  # Server Side
 with open(r'keys/keys.yaml') as keys_file: #Local Side
     keys = yaml.load(keys_file, yaml.FullLoader)['keys']['compression']['ai']
 
@@ -22,21 +20,23 @@ with open(r'keys/keys.yaml') as keys_file: #Local Side
 scraping_controller = ScrapingController(llm='gpt', cheap_llm='gemini')
 search_engine = SearchEngine()
 searching_type = "basic"
-#content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
+#content = open("/var/www/html/ui/templates/template.html", "r", encoding="utf-8").read()  # Server Side
 content = open("ui/templates/template.html", "r",encoding="utf-8").read() #Local Side
 finalContent = ""
 
-#MAIN FUNCTIONS
+
+# MAIN FUNCTIONS
 @views.route("/", methods=["POST", "GET", "PUT"])
 def home():
-    #css_file = open("ui/static/result.css", 'w')  # Clean css file
-    # cache.clear()
+    # css_file = open("ui/static/result.css", 'w')  # Clean css file
     return render_template("index.html")
+
 
 @views.route("/go-to")
 def go_to():
     print("Redirected to search result")
     return redirect(url_for("views.search_result"))
+
 
 @views.route("/final-result", methods=["POST", "GET", "PUT"])
 def final_result():
@@ -56,7 +56,8 @@ def final_result():
             print("Failed to load, exception ", e)
 
     print("Showing actual result")
-    #Fix the bug with comment lines not been closed
+    print("final result test")
+
     splitContent = ""
     splitContent = iter(finalContent.splitlines())
     fixedContent = ""
@@ -77,10 +78,15 @@ def search_result():
     global content
     # I want to buy used honda sedan with 130k or less miles, under 6k in good condition 30 miles away from atlanta
     formatted_search = ""
-
+    if request.method == "GET":
+        print("Get request received")
+        print("Request Headers ", request.headers)  # Keep For Debug
+        print("Request Environ ", request.environ)
     if request.method == "POST":
-        #Format and get the data
-        received_data = request.get_json()
+        print("Post Request Received")
+
+        received_data = request.get_json()  # received_data = request.json
+        print(received_data)
         print(f"received data: {received_data['data']}")
         print(f"Prefered Website: {received_data['pref-website']}")
         print(f"Search Method:  {received_data['search-type']}")
@@ -89,7 +95,7 @@ def search_result():
             "Reformat this text into a searchable query: " + str(received_data["data"]))
         print(f"Formatted Search: {formatted_search}")
 
-        # Use update-links method to refresh the search results (stored inside the class).
+        # # Use update-links method to refresh the search results (stored inside the class).
         # Start entry is 0 by default, it's the pagination offset
         search_engine.update_links(formatted_search.strip("\""), start_entry=0)
 
@@ -100,11 +106,11 @@ def search_result():
         if searching_type == "basic":
             print("Basic Search")
             # Save links in HTML ---------------------------------------------------------------
-            #content = open("/var/www/html/ui/templates/template.html", "r",encoding="utf-8").read() #Server Side
+            #content = open("/var/www/html/ui/templates/template.html", "r", encoding="utf-8").read()  # Server Side
             content = open("ui/templates/template.html", "r", encoding="utf-8").read() #Local Side
             list = "<ul>"
             mainDiv = "<div id='maincontent'>"
-            #Save HTML to variable
+            # Save HTML to variable
             if mainDiv in content:
                 addPos = len(mainDiv)
                 pos = content.index(mainDiv) + addPos
@@ -113,8 +119,9 @@ def search_result():
                 for link in links_list:
                     addPos = len(list)
                     pos = content.index(list) + addPos
-                    content = content[:pos] + f"<li><img src='{link['icon']}'><a href='{link['url']}' class='result-link'>" + link['title'] + "</a><br><p>" + link['url'] +"</p></li>" + content[pos:]
-
+                    content = content[
+                              :pos] + f"<li><img src='{link['icon']}'><a href='{link['url']}' class='result-link'>" + \
+                              link['title'] + "</a><br><p>" + link['url'] + "</p></li>" + content[pos:]
 
             print("Redirected to go-to page")
             return redirect(url_for("views.go_to"))
@@ -126,15 +133,15 @@ def search_result():
 
             parse_website(received_data, formatted_search, page, content)
 
-
             print("Redirected to go-to page")
             return redirect(url_for("views.go_to"))
 
     print("Showing actual result")
     return render_template_string(content)
 
-#HELPER FUNCTIONS
-#Parse selected website and show user relevant information
+
+# HELPER FUNCTIONS
+# Parse selected website and show user relevant information
 def parse_website(received_data: dict, formatted_search: str, page: dict, render_var):
     global content, finalContent
     # Get page url
@@ -168,7 +175,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
 
     # Add Overlay
-    #finalContent = add_overlay(render_var)
+    # finalContent = add_overlay(render_var)
     finalContent = render_var
 
     # Send success message so we can start reload page to render new html
@@ -177,7 +184,7 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
         "message": f"received",
         "content": finalContent
     }
-    #endpoint_url = "http://vulkanai.org:5000/views/final-result" #Server Side
+    #endpoint_url = "https://vulkanai.org:5000/views/final-result"  # Server Side
     endpoint_url = "http://127.0.0.1:8000/views/final-result" #Local Side
     response = requests.post(endpoint_url, json=return_data)
     if response.status_code == 200 or response.status_code == 201:
@@ -185,11 +192,12 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     else:
         print("Failed to send")
 
-#Add VulkanAI overlay with back button and slider
+
+# Add VulkanAI overlay with back button and slider
 def add_overlay(resultHTML: str):
     # Add Overlay button which allows users to go back on page
-    cssLink = '\n<link href="../static/templatestyle.css" rel="stylesheet">\n<link href="../static/result.css" rel="stylesheet">'
-    scriptLink = "<script src='../static/redirect.js'></script>\n"
+    cssLink = '\n<link href="ui/static/templatestyle.css" rel="stylesheet">\n<link href="../static/result.css" rel="stylesheet">'
+    scriptLink = "<script src='../ui/static/redirect.js'></script>\n"
     headTag = '<head>'
     bodyTag = '<body>'
     endBodyTag = '</body>'

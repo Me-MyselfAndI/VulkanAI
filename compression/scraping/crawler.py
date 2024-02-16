@@ -19,12 +19,12 @@ chrome_options.add_argument("--headless=new")
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
 vulkanai_dir = os.path.dirname(parent_dir)
-sys.path.append(vulkanai_dir)
+sys.path.append(vulkanai_dir)#Local Side
 
-#capsolver_extension_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/extension" #Server Side
-capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension"
-#chrome_driver_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/chromedriver.exe" #Server Side
-chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe"
+#capsolver_extension_path = "/var/www/html/compression/captcha_solver/extension" #Server Side
+capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension" #Local Side
+#chrome_driver_path = "/var/www/html/compression/captcha_solver/chromedriver" #Server Side
+chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe" #Local Side
 chrome_service = Service(executable_path=chrome_driver_path)
 chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
 

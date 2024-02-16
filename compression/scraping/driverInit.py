@@ -18,9 +18,9 @@ class DriverInit:
         sys.path.append(vulkanai_dir)
 
         # capsolver_extension_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/extension" #Server Side
-        capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension"
-        # chrome_driver_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/chromedriver.exe" #Server Side
-        chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe"
+        capsolver_extension_path = vulkanai_dir + "/compression/captcha_solver/extension" #Local Side
+        # chrome_driver_path = vulkanai_dir + "/var/www/html/compression/captcha_solver/chromedriver" #Server Side
+        chrome_driver_path = vulkanai_dir + "/compression/captcha_solver/chromedriver.exe" #Local Side
 
         chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
         chrome_service = Service(executable_path=chrome_driver_path)
