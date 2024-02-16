@@ -31,18 +31,19 @@ function wait(ms){
 
 //Move user search result page
 function sendToNewPage() {
-    console.log("Sending user to new page");
+    console.log("Sent user to new page");
     showLoader()
+
     // Check response is ready or not
     if (xhr.readyState === 4 || xhr.status === 201) {
         if(searchType == "basic"){
-            //window.location.href = "http://vulkanai.org:5000/views/search-result"; //Server Side
+            //window.location.href = "https://result.vulkanai.org/views/search-result"; //Server Side
             window.location.href = "http://127.0.0.1:8000/views/search-result"; //Local Side
         } else {
-            //window.location.href = "http://vulkanai.org:5000/views/search-result"; //Server Side
+            //window.location.href = "https://result.vulkanai.org/views/final-result"; //Server Side
             window.location.href = "http://127.0.0.1:8000/views/final-result"; //Local Side
         }
-        console.log("Received data");
+        console.log("received data");
         console.log(xhr.responseText);
     }
 }
@@ -50,7 +51,6 @@ function sendToNewPage() {
 //Send data to Python
 document.getElementById("search-button").addEventListener("click", function(event) {
     xhr = null;
-
     let prefWebsite = document.getElementById("website-value").value;//Get prefered website for searching
     let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
     console.log(inputValue);
@@ -60,9 +60,14 @@ document.getElementById("search-button").addEventListener("click", function(even
     xhr = getXmlHttpRequestObject();
     xhr.onreadystatechange = sendToNewPage;
 
-    //xhr.open("POST", "http://vulkanai.org:5000/views/search-result", true); //Server Side
+    //SEND REQUEST
+    //xhr.open("POST", "https://result.vulkanai.org/views/search-result", true); //Server Side
     xhr.open("POST", "http://127.0.0.1:8000/views/search-result", true); //Local Side
-    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");//application/json;charset=UTF-8
+
+    xhr.mode = 'no-cors';
     // Send the request over the network
     xhr.send(JSON.stringify({"data": inputValue, "pref-website": prefWebsite, "search-type": searchType}));
 });
@@ -91,7 +96,7 @@ $('textarea').on({
     },
     keypress: function(e){
        //cancel the Enter keystroke, otherwise a new line will be created
-       if(e.which == 13) e.preventDefault();
+       //if(e.which == 13) e.preventDefault();
     },
     keydown: function (e) {
         var text = $(this).val();
@@ -100,25 +105,13 @@ $('textarea').on({
     }
 });
 
-
-
 //Send what type of search user is using
-function setSearchType(){
-    var checkmark = document.getElementById("speed");
+document.getElementById("speed").addEventListener("click", function(event) {
+    let checkmark = document.getElementById("speed"); // Declare checkmark locally
     if(checkmark.checked) {
-        searchType = "speed";
+        searchType = "speed"; // Assign new value to the globally declared searchType
     } else {
-        searchType = "basic";
+        searchType = "basic"; // Assign new value to the globally declared searchType
     }
-}
-/*$("#speed").click(function(){
-    if($('input[type=radio]:checked').length > 0){
-       searchType = "speed";
-    }
-})
-
-$("#basic").click(function(){
-    if($('input[type=radio]:checked').length > 0){
-       searchType = "basic";
-    }
-})*/
+    console.log(searchType);
+});
