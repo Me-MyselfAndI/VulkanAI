@@ -58,6 +58,7 @@ def final_result():
     print("Showing actual result")
     print("final result test")
 
+    #Fixes Jinja exception with unclosed comment lines
     splitContent = ""
     splitContent = iter(finalContent.splitlines())
     fixedContent = ""
@@ -68,7 +69,12 @@ def final_result():
             diff = count_open - count_close
             line += '#}' * diff
         fixedContent += line + " "
+    print("Fixed Content")
     print(fixedContent)
+    print("Final Content")
+    print(finalContent)
+
+
 
     return render_template_string(fixedContent)
 

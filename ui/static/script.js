@@ -51,7 +51,8 @@ function sendToNewPage() {
 //Send data to Python
 document.getElementById("search-button").addEventListener("click", function(event) {
     xhr = null;
-    let prefWebsite = document.getElementById("website-value").value;//Get prefered website for searching
+    //let prefWebsite = document.getElementById("website-value").value;//Get prefered website for searching
+    let prefWebsite = ""; //Just for now while we dont use pref website
     let inputValue = document.getElementById("search-input").value;//If using input field use 'document.getElementById("search-input")[0].value'
     console.log(inputValue);
     console.log(prefWebsite)
