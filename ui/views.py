@@ -120,7 +120,7 @@ def search_result():
             if mainDiv in content:
                 addPos = len(mainDiv)
                 pos = content.index(mainDiv) + addPos
-                content = content[:pos] + "<h2 id='search-input'>" + formatted_search + "</h2>" + content[pos:]
+                content = content[:pos] + "<h2 id='search-input-title'>" + formatted_search + "</h2>" + content[pos:]
             if list in content:
                 for link in links_list:
                     addPos = len(list)
@@ -164,18 +164,18 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     }
 
     # Save CSS
-    try:
+    """try:
         css_code = page['css']
         print("Saved CSS")
         print(css_code)
     except:
-        print("Failed to get css code")
+        print("Failed to get css code")"""
 
     # Save HTML ---------------------------------------------------------------
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
     if returnedResponse["status"] == "ok":
         render_var = str(returnedResponse["response"])
-        print(render_var)
+        #print(render_var)
         print("Saved HTML")
     else:
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
