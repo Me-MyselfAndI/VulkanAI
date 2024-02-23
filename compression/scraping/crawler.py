@@ -64,7 +64,7 @@ class Crawler:
         except TimeoutException:
             return False
 
-    def filter_marketplace_products(self, product_info, search_query, threshold=3, llm_request_batching_quantity=8):
+    def filter_marketplace_products(self, product_info, search_query, threshold=3, llm_request_batching_quantity=8, num_repeats=4):
         self.handle_popup_alert(search_query)
         if self.verbose >= 2:
             print(f"Products ({len(product_info)}):")
@@ -106,44 +106,60 @@ class Crawler:
         )
         batched_args = [args[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity] for i in range(len(args) // llm_request_batching_quantity)]
 
-        batched_llm_responses = self.llm_engine.get_responses_async(
-            f'Customer looking for"{search_query}".Rank products "{{}} " from 1(terrible match for request) to '
-            f'5(perfect match). RETURN ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
-            args=batched_args,
-            timeout=10 * llm_request_batching_quantity
-        )
-
         llm_responses = []
-        for i, curr_batched_llm_responses in enumerate(batched_llm_responses):
-            try:
-                curr_batched_llm_responses = json.loads(curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
-            except Exception as error:
-                if self.verbose >= 1:
-                    print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
-                llm_responses.extend(['0'] * llm_request_batching_quantity)
-                continue
+        for i in range(num_repeats):
+            batched_llm_responses = self.llm_engine.get_responses_async(
+                f'Customer looking for"{search_query}".Rank products "{{}} " from 1(terrible match for request) to '
+                f'5(perfect match). RETURN ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
+                args=batched_args,
+                timeout=10 * llm_request_batching_quantity
+            )
 
-            for curr_key in range(llm_request_batching_quantity):
-                if str(curr_key) not in curr_batched_llm_responses:
-                    if self.verbose >= 2:
-                        print(f"\u001b[33mWarning: llm response {curr_key} could not be found in batch #{i}\u001b[0m")
-                    llm_responses.append('0')
-                    continue
+            curr_llm_responses = []
+            for i, curr_batched_llm_responses in enumerate(batched_llm_responses):
                 try:
-                    llm_responses.append(str(curr_batched_llm_responses[str(curr_key)]))
+                    curr_batched_llm_responses = json.loads(curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
                 except Exception as error:
                     if self.verbose >= 1:
-                        print(f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
-                    llm_responses.append('0')
+                        print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
+                    curr_llm_responses.extend(['1'] * llm_request_batching_quantity)
+                    continue
+
+                for curr_key in range(llm_request_batching_quantity):
+                    if str(curr_key) not in curr_batched_llm_responses:
+                        if self.verbose >= 2:
+                            print(f"\u001b[33mWarning: llm response {curr_key} could not be found in batch #{i}\u001b[0m")
+                        curr_llm_responses.append('1')
+                        continue
+                    try:
+                        curr_llm_responses.append(str(curr_batched_llm_responses[str(curr_key)]))
+                    except Exception as error:
+                        if self.verbose >= 1:
+                            print(f"\u001b[31mError encountered while converting llm response {curr_key} in batch {i}: {error}\u001b[0m")
+                        curr_llm_responses.append('1')
+
+            try:
+                curr_llm_responses = list(map(lambda x: int(x), curr_llm_responses))
+            except Exception:
+                if self.verbose >= 1:
+                    print(f"\u001b[31mError encountered while making llm response {curr_key} integer in batch {i}: {error}\u001b[0m")
+                curr_llm_responses.append('1')
+
+            if len(llm_responses) == 0:
+                llm_responses = curr_llm_responses
+            else:
+                llm_responses_len = len(llm_responses)
+                for i in range(len(curr_llm_responses)):
+                    llm_responses[i] = (llm_responses[i] * llm_responses_len + curr_llm_responses[i]) / (llm_responses_len + 1)
 
         for i, (product, llm_response) in enumerate(zip(nonempty_description_products, llm_responses)):
             try:
-                if not '1' <= llm_response < '6':
+                if not 0 <= llm_response < 6:
                     if self.verbose >= 1:
-                        print(f"\u001b[31mWARNING! BAD RESPONSE: {llm_response}")
+                        print(f"\u001b[31mWarning when converting llm responses into kept products! BAD RESPONSE: {llm_response}")
                     llm_response = 0
 
-                llm_response = int(llm_response[0])
+                llm_response = int(llm_response)
                 if self.verbose >= 2:
                     print(product, llm_response, "\n")
 
@@ -151,7 +167,7 @@ class Crawler:
                     filtered_products.append(product)
             except Exception as e:
                 if self.verbose >= 1:
-                    print(f'\u001b[31mException "{e}" encountered with this product; skipping\u001b[0m')
+                    print(f'\u001b[31mException "{e}" encountered with product {product} and llm response {llm_response}; skipping\u001b[0m')
                 continue
         return filtered_products
 
