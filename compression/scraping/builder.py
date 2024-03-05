@@ -38,12 +38,28 @@ class Builder:
             </html>
             """
 
+    _empty_page_template = \
+        '''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>VulkanAI</title>
+        </head>
+        <body>
+            <h1>Sorry, no items were discovered. Try relaxing your search parameters.</h1>
+        </body>
+        </html>
+        '''
+
     def __init__(self, llm, cheap_llm=None):
         self._llm = llm
         if cheap_llm is None:
             self._cheap_llm = self._llm
         else:
             self._cheap_llm = cheap_llm
+
+    def get_empty_page(self):
+        return self._empty_page_template
 
     def generate_ancestral_html(self, html_tree, parsed_content, verbose=0):
         # Get ancestry that is to be kept:

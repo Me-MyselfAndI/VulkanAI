@@ -49,9 +49,15 @@ class ScrapingController:
                 parsing_response = parser.find_container_groups(website['url'])
                 product_groups, html_tree = parsing_response['products'], parsing_response['tree']
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query, threshold=threshold)
+                if len(filtered_products) == 0:
+                    return {
+                        'status': 'empty-result',
+                        'response': self._builder.get_empty_page()
+                    }
+                result = self._builder.generate_ancestral_html(html_tree, filtered_products, verbose=self.verbose)
                 return {
                     'status': 'ok',
-                    'response': self._builder.generate_ancestral_html(html_tree, filtered_products, verbose=self.verbose)
+                    'response': result
                 }
 
             else:
@@ -65,7 +71,11 @@ class ScrapingController:
 
                 parsing_response = crawled_page_parser.find_text_content()
                 parsed_content, html_tree = parsing_response['items'], parsing_response['tree']
-
+                if len(parsed_content) == 0:
+                    return {
+                        'status': 'empty-result',
+                        'response': self._builder.get_empty_page()
+                    }
                 return {
                     'status': 'ok',
                     'response': self._builder.generate_ancestral_html(html_tree, parsed_content, verbose=self.verbose)
