@@ -6,6 +6,7 @@ from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 import yaml, os, flask, json, requests, time
 from compression.main import ScrapingController
+from __init__ import cache
 
 # Init Classes
 views = Blueprint(__name__, "views")
@@ -37,7 +38,7 @@ def go_to():
     print("Redirected to search result")
     return redirect(url_for("views.search_result"))
 
-
+#@cache.memoize(50)
 @views.route("/final-result", methods=["POST", "GET", "PUT"])
 def final_result():
     global finalContent
@@ -68,7 +69,7 @@ def final_result():
         if count_open > count_close:
             diff = count_open - count_close
             line += '#}' * diff
-        fixedContent += line + " "
+        fixedContent += line + " \n"
     print("Fixed Content")
     print(fixedContent)
     print("Final Content")
@@ -78,7 +79,7 @@ def final_result():
 
     return render_template_string(fixedContent)
 
-
+#@cache.memoize(50)
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     global content
@@ -88,6 +89,7 @@ def search_result():
         print("Get request received")
         print("Request Headers ", request.headers)  # Keep For Debug
         print("Request Environ ", request.environ)
+        #cache.clear()
     if request.method == "POST":
         print("Post Request Received")
 
