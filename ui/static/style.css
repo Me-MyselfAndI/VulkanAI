@@ -3,7 +3,7 @@
   }
 
   .logo {
-    max-width: 33em;
+    max-width: 32em;
     margin-left:auto;
     margin-right:auto;
     border-radius: 200px;
@@ -94,4 +94,10 @@ Limits the spread of everything, might be needed later
     color: white;
     margin: 0 auto;
   }
+
+  #footerText {
+    color: #FBB321;
+    margin-top: 5%;
+  }
+
 

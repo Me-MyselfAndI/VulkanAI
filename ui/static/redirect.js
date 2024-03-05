@@ -164,7 +164,7 @@ for (var i = 0; i < result_links.length; i++) {
         showLoader()
         // prevent navigating to a new page
         event.preventDefault();
-        let inputValue = document.getElementById("search-input").innerHTML;
+        let inputValue = document.getElementById("search-input-title").innerHTML;
         let clickedLink = this.href;
         console.log('Clicked on: ' + clickedLink);
         console.log(inputValue)

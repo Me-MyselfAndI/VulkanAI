@@ -6,6 +6,7 @@ from web_search.search_engine import SearchEngine
 from compression.ai.gpt_engine import GPTEngine
 import yaml, os, flask, json, requests, time
 from compression.main import ScrapingController
+from __init__ import cache
 
 # Init Classes
 views = Blueprint(__name__, "views")
@@ -37,7 +38,7 @@ def go_to():
     print("Redirected to search result")
     return redirect(url_for("views.search_result"))
 
-
+#@cache.memoize(50)
 @views.route("/final-result", methods=["POST", "GET", "PUT"])
 def final_result():
     global finalContent
@@ -58,6 +59,7 @@ def final_result():
     print("Showing actual result")
     print("final result test")
 
+    #Fixes Jinja exception with unclosed comment lines
     splitContent = ""
     splitContent = iter(finalContent.splitlines())
     fixedContent = ""
@@ -67,12 +69,17 @@ def final_result():
         if count_open > count_close:
             diff = count_open - count_close
             line += '#}' * diff
-        fixedContent += line + " "
+        fixedContent += line + " \n"
+    print("Fixed Content")
     print(fixedContent)
+    print("Final Content")
+    print(finalContent)
+
+
 
     return render_template_string(fixedContent)
 
-
+#@cache.memoize(50)
 @views.route("/search-result", methods=["POST", "GET", "PUT"])
 def search_result():
     global content
@@ -82,6 +89,7 @@ def search_result():
         print("Get request received")
         print("Request Headers ", request.headers)  # Keep For Debug
         print("Request Environ ", request.environ)
+        #cache.clear()
     if request.method == "POST":
         print("Post Request Received")
 
@@ -114,7 +122,7 @@ def search_result():
             if mainDiv in content:
                 addPos = len(mainDiv)
                 pos = content.index(mainDiv) + addPos
-                content = content[:pos] + "<h2 id='search-input'>" + formatted_search + "</h2>" + content[pos:]
+                content = content[:pos] + "<h2 id='search-input-title'>" + formatted_search + "</h2>" + content[pos:]
             if list in content:
                 for link in links_list:
                     addPos = len(list)
@@ -158,18 +166,18 @@ def parse_website(received_data: dict, formatted_search: str, page: dict, render
     }
 
     # Save CSS
-    try:
+    """try:
         css_code = page['css']
         print("Saved CSS")
         print(css_code)
     except:
-        print("Failed to get css code")
+        print("Failed to get css code")"""
 
     # Save HTML ---------------------------------------------------------------
     returnedResponse = scraping_controller.get_parsed_website_html(website, formatted_search)
     if returnedResponse["status"] == "ok":
         render_var = str(returnedResponse["response"])
-        print(render_var)
+        #print(render_var)
         print("Saved HTML")
     else:
         print(f"\u001b[31m Error encountered: {returnedResponse['response']}\u001b[0m")
