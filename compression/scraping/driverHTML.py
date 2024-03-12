@@ -6,17 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
-class driverHTML:
-    def __init__(self, url):
+
+class DriverHTML:
+    def __init__(self, url, headless=True):
         self.url = url
-        
+
         chrome_options = Options()
         chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--headless=new")
-        
-#         capsolver_extension_path = "/var/www/html/compression/captcha_solver/extension"
-#         chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
-        
+        if headless:
+            chrome_options.add_argument("--headless=new")
         self.driver = webdriver.Chrome(options=chrome_options)
 
     def wait_for_page_load(self, timeout=30):
@@ -26,14 +24,14 @@ class driverHTML:
 
     def close_modal_popups(self):
         close_button_selectors = [
-        ".modal-close", ".close", ".dismiss", "[aria-label='Close']", "[aria-label='close']",
-        "button.close", "div[role='dialog'] button[aria-label='Close']", "div[aria-label='Close'][role='button']",
-        ".icon-close", ".icon-dismiss", "svg[aria-label='Close']", "svg.close-icon",
-        "button[title='Close']", "button[title='Dismiss']", "[data-dismiss='modal']",
-        "div[role='button'][aria-label='Close']", "div[role='button'][aria-label='close']", "div.close-modal",
-        "span.close-modal", "a.close-modal", "i.close-modal", ".modal-header button.close",
-        "button[data-dismiss='modal']", "button[data-action='close']", "a[data-action='close']",
-        ".modal-content .close", ".lightbox-close", ".overlay-close", "button[aria-label='Dismiss']",
+            ".modal-close", ".close", ".dismiss", "[aria-label='Close']", "[aria-label='close']",
+            "button.close", "div[role='dialog'] button[aria-label='Close']", "div[aria-label='Close'][role='button']",
+            ".icon-close", ".icon-dismiss", "svg[aria-label='Close']", "svg.close-icon",
+            "button[title='Close']", "button[title='Dismiss']", "[data-dismiss='modal']",
+            "div[role='button'][aria-label='Close']", "div[role='button'][aria-label='close']", "div.close-modal",
+            "span.close-modal", "a.close-modal", "i.close-modal", ".modal-header button.close",
+            "button[data-dismiss='modal']", "button[data-action='close']", "a[data-action='close']",
+            ".modal-content .close", ".lightbox-close", ".overlay-close", "button[aria-label='Dismiss']",
         ]
 
         for selector in close_button_selectors:
