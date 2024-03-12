@@ -93,7 +93,6 @@ class Crawler:
                 product_str = product_str[:-1] + ']'
             args.append(product_str)
 
-        # TODO: Make better or remove
         args = self.llm_engine.get_responses_async(
             f'I give you list of product properties and values: {{}}. You need to compress the number of tokens here'
             f'for the purpose of evaluating relevance for {search_query}. You do this in two primary ways: by removing'
