@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from compression.ai.astica_engine import AsticaEngine
+from compression.ai.claude_engine import ClaudeEngine
 from compression.ai.gemini_engine import GeminiEngine
 from compression.ai.gpt_assistants_engine import GPTAssistantsEngine
 from compression.ai.gpt_engine import GPTEngine
@@ -11,11 +12,14 @@ from compression.scraping.builder import Builder
 from compression.scraping.crawler import Crawler
 from compression.scraping.parser import Parser
 
+from scraping.driverHTML import DriverHTML
+
 
 class ScrapingController:
     def __init__(self, llm='gpt', cheap_llm='gemini', verbose=0):
         gpt_codes = {
             'gpt': GPTEngine,
+            'claude': ClaudeEngine,
             'gemini': GeminiEngine,
             'mistral': MistralEngine,
             'gpt-assistants': GPTAssistantsEngine,
@@ -26,7 +30,7 @@ class ScrapingController:
         self._builder = Builder(self._llm, cheap_llm=self._cheap_llm)
         self.verbose = verbose
 
-    def get_parsed_website_html(self, website, search_query, threshold=3):
+    def get_parsed_website_html(self, website, search_query, threshold=4):
         try:
             marketplace_likelihoods = self._llm.get_responses_async(
                 f'Is this query {search_query} on this website {website["url"]} likely to be a marketplace? Rate the '
@@ -44,7 +48,7 @@ class ScrapingController:
                     print(f"\u001b[31m Error encountered while determining marketplace vs non-marketplace: {e}")
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
-                crawler = Crawler(self._llm, cheap_llm_engine=self._cheap_llm, verbose=self.verbose)
+                crawler = Crawler(self._llm, verbose=self.verbose)
                 parser = Parser(website['url'], html=website['html'], verbose=self.verbose)
                 parsing_response = parser.find_container_groups(website['url'])
                 product_groups, html_tree = parsing_response['products'], parsing_response['tree']
@@ -90,18 +94,11 @@ class ScrapingController:
 def main():
     verbose = 2
 
-    url = 'https://www.facebook.com/marketplace/category/vehicles'
+    url = 'https://atlanta.craigslist.org/search/atlanta-ga/cta'
 
     scraping_controller = ScrapingController(verbose=verbose)
-    options = Options()
-    # options.add_argument('--headless=new')
-    options.add_argument("window-size=19200,11800")
-    options.add_argument('--disable-browser-side-navigation')
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-    source_html = driver.page_source
-    driver.quit()
-
+    driver = DriverHTML(url, headless=False)
+    source_html = driver.fetch_page_html(scroll_count=5, timeout=10)
 
     result = scraping_controller.get_parsed_website_html(
         {
