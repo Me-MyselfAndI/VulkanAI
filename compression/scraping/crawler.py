@@ -30,13 +30,9 @@ chrome_options.add_argument(f"--load-extension={capsolver_extension_path}")
 
 
 class Crawler:
-    def __init__(self, llm_engine, cheap_llm_engine=None, verbose=0):
+    def __init__(self, llm_engine, verbose=0):
         self.verbose = verbose
         self.llm_engine = llm_engine
-        if cheap_llm_engine is None:
-            self.cheap_llm_engine = self.llm_engine
-        else:
-            self.cheap_llm_engine = cheap_llm_engine
         self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
     def get_page_source(self, url):
@@ -97,22 +93,24 @@ class Crawler:
                 product_str = product_str[:-1] + ']'
             args.append(product_str)
 
-        args = self.cheap_llm_engine.get_responses_async(
+        # TODO: Make better or remove
+        args = self.llm_engine.get_responses_async(
             f'I give you list of product properties and values: {{}}. You need to compress the number of tokens here'
             f'for the purpose of evaluating relevance for {search_query}. You do this in two primary ways: by removing'
             f'information irrelevant for making this decision and by bundling together properties that belong together '
             f'(such as when a property name is separated from its value). Return compressed description and nothing else',
-            args=args
+            args=args,
+            use_cheap_model=True
         )
         batched_args = [args[i * llm_request_batching_quantity: (i + 1) * llm_request_batching_quantity] for i in range(len(args) // llm_request_batching_quantity)]
 
         llm_responses = []
         for i in range(num_repeats):
             batched_llm_responses = self.llm_engine.get_responses_async(
-                f'Customer looking for"{search_query}".Rank products "{{}} " from 1(terrible match for request) to '
-                f'5(perfect match). RETURN ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
+                f'Customer looking for"{search_query}".Rank each and every product in "{{}} " from 1(terrible match for request) to '
+                f'5(perfect match). RETURN JSON AND ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
                 args=batched_args,
-                timeout=10 * llm_request_batching_quantity
+                timeout=20 * llm_request_batching_quantity
             )
 
             curr_llm_responses = []
@@ -120,10 +118,16 @@ class Crawler:
                 try:
                     curr_batched_llm_responses = json.loads(curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n'))
                 except Exception as error:
-                    if self.verbose >= 1:
-                        print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
-                    curr_llm_responses.extend(['1'] * llm_request_batching_quantity)
-                    continue
+                    # Retrying
+                    try:
+                        curr_batched_llm_responses = json.loads(
+                            curr_batched_llm_responses.lower().strip('```').strip('\'').strip('"').strip("json").strip('\n')
+                        )
+                    except Exception as error:
+                        if self.verbose >= 1:
+                            print(f"\u001b[33mError encountered while converting llm responses to json: {error}\u001b[0m")
+                        curr_llm_responses.extend(['1'] * llm_request_batching_quantity)
+                        continue
 
                 for curr_key in range(llm_request_batching_quantity):
                     if str(curr_key) not in curr_batched_llm_responses:
