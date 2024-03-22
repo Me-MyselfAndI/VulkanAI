@@ -64,7 +64,7 @@ class Builder:
     def generate_ancestral_html(self, html_tree, parsed_content, verbose=0):
         # Get ancestry that is to be kept:
         tags_to_keep = set()
-        init_keep_tags = list(map(lambda x: x['tag'], parsed_content)) + html_tree.find_all('style') + html_tree.find_all('link')
+        init_keep_tags = list(map(lambda x: x['tag'], parsed_content)) + html_tree.find_all('style') + html_tree.find_all('link') + html_tree.find_all('head')
         for item in init_keep_tags:
             curr_item = item
             tags_to_keep = tags_to_keep.union(set(curr_item.descendants))
@@ -74,10 +74,7 @@ class Builder:
 
         # Generate HTML that contains everything that needs to stay
         for tag in set(html_tree.find_all()).difference(tags_to_keep):
-            # test_var = str(tags_to_keep)
             tag.extract()
-            # if test_var != str(tags_to_keep):
-            #     print("ERROR!!")
 
         return html_tree
 

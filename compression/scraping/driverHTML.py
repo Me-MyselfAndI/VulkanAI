@@ -59,7 +59,14 @@ class DriverHTML:
                 initial_html = new_html
             except TimeoutException:
                 break
-        return self.driver.page_source
+
+        result = {
+            'full-html': self.driver.page_source,
+            'head': self.driver.find_element(By.TAG_NAME, 'head').get_attribute('outerHTML'),
+            'body': self.driver.find_element(By.TAG_NAME, 'body').get_attribute('outerHTML')
+        }
+
+        return result
 
     def quit_driver(self):
         self.driver.quit()

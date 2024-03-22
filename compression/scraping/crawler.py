@@ -60,7 +60,7 @@ class Crawler:
         except TimeoutException:
             return False
 
-    def filter_marketplace_products(self, product_info, search_query, threshold=3, llm_request_batching_quantity=8, num_repeats=4):
+    def filter_marketplace_products(self, product_info, search_query, threshold=3, llm_request_batching_quantity=5, num_repeats=4):
         self.handle_popup_alert(search_query)
         if self.verbose >= 2:
             print(f"Products ({len(product_info)}):")
@@ -95,10 +95,11 @@ class Crawler:
 
         # TODO: Make better or remove
         args = self.llm_engine.get_responses_async(
-            f'I give you list of product properties and values: {{}}. You need to compress the number of tokens here'
-            f'for the purpose of evaluating relevance for {search_query}. You do this in two primary ways: by removing'
-            f'information irrelevant for making this decision and by bundling together properties that belong together '
-            f'(such as when a property name is separated from its value). Return compressed description and nothing else',
+            f'I give you list of product properties and values: {{}}. Compress the number of tokens here'
+            f'for the purpose of evaluating relevance for {search_query}. You do this in two ways: by removing'
+            f'information irrelevant for this decision and by bundling together properties that belong together '
+            f'(such as when a property name is separated from its value). '
+            f'Do not assume anything. Return compressed description and nothing else',
             args=args,
             use_cheap_model=True
         )
@@ -108,7 +109,7 @@ class Crawler:
         for i in range(num_repeats):
             batched_llm_responses = self.llm_engine.get_responses_async(
                 f'Customer looking for"{search_query}".Rank each and every product in "{{}} " from 1(terrible match for request) to '
-                f'5(perfect match). RETURN JSON AND ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
+                f'5(perfect match). RETURN ONLY JSON ONLY JSON FOR EACH OBJECT COUNTING FROM 0 LIKE ' + '{{"0":3,"1":4,"2":4,...}}',
                 args=batched_args,
                 timeout=20 * llm_request_batching_quantity
             )

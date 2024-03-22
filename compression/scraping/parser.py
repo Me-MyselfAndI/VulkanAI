@@ -60,7 +60,7 @@ class Parser:
     def __init__(self, url, html=None, soup=None, verbose=0):
         self.url = url
         if html is not None:
-            self.soup = BeautifulSoup(html, 'html.parser')
+            self.soup = BeautifulSoup(html, 'html.parser', preserve_whitespace_tags=['head'])
             # self.soup = BeautifulSoup(html, 'lxml')
         elif soup is not None:
             self.soup = copy.copy(soup)
@@ -78,6 +78,7 @@ class Parser:
 
         images = self.soup.find_all('img')
         products = []
+
         for image in images:
             if self.verbose >= 2:
                 print(image)

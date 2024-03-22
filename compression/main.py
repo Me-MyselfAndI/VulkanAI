@@ -49,7 +49,7 @@ class ScrapingController:
 
             if sum(marketplace_likelihoods) / len(marketplace_likelihoods) >= 4:
                 crawler = Crawler(self._llm, verbose=self.verbose)
-                parser = Parser(website['url'], html=website['html'], verbose=self.verbose)
+                parser = Parser(website['url'], html=website['html']['body'], verbose=self.verbose)
                 parsing_response = parser.find_container_groups(website['url'])
                 product_groups, html_tree = parsing_response['products'], parsing_response['tree']
                 filtered_products = crawler.filter_marketplace_products(product_groups, search_query, threshold=threshold)
@@ -94,11 +94,11 @@ class ScrapingController:
 def main():
     verbose = 2
 
-    url = 'https://atlanta.craigslist.org/search/atlanta-ga/cta'
+    url = 'https://atlanta.craigslist.org/search/atl/cta?max_price=5000&min_price=1&purveyor=dealer#search=1~gallery~0~26'
 
     scraping_controller = ScrapingController(verbose=verbose)
     driver = DriverHTML(url, headless=False)
-    source_html = driver.fetch_page_html(scroll_count=5, timeout=10)
+    source_html = driver.fetch_page_html(scroll_count=10, timeout=10)
 
     result = scraping_controller.get_parsed_website_html(
         {
@@ -106,7 +106,7 @@ def main():
             'html': source_html,
             'lang': None
         },
-        'Used Japanese sedan under 150k miles',
+        'Used Japanese sedan under 180k miles and 3500 dollars',
         threshold=3
     )
     print("\u001b[35m", result['response'])
